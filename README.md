@@ -1,4 +1,4 @@
-# TCecure Cyber Lab – Landing Page
+# Adroa Domain – Landing Page
 
 Vite + React + Tailwind landing page scaffold. Deploys on Vercel. Auth0 hooks left for later.
 

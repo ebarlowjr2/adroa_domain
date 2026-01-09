@@ -85,7 +85,7 @@ export default function HowItWorks() {
           <div>
             <Badge>Public brief</Badge>
             <h1 className="mt-4 text-4xl font-extrabold leading-tight md:text-5xl">
-              How the <span className="text-brand-accent">TCecure Cyber Lab</span> works
+              How the <span className="text-brand-accent">Adroa Domain</span> works
             </h1>
             <p className="mt-4 max-w-2xl text-white/75">
               Train onsite or remotely in a monitored, safe environment. Students learn real tools,

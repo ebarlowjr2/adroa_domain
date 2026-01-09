@@ -8,7 +8,7 @@ export default function Hero() {
           Now onboarding learners & teams
         </span>
         <h1 className="mt-4 text-4xl font-extrabold leading-tight md:text-5xl text-brand-neutral-50">
-          Welcome to the <span className="text-brand-accent">TCecure Cyber Lab</span>
+          Welcome to the <span className="text-brand-accent">Adroa Domain</span>
         </h1>
         <p className="mt-4 max-w-xl text-brand-neutral-200">
           A modern sandbox to learn cybersecurity, practice real skills, and
@@ -33,7 +33,7 @@ export default function Hero() {
       <div className="rounded-2xl border border-brand-neutral-600 bg-gradient-to-b from-brand-neutral-700/50 to-brand-neutral-800/30 p-6 shadow-xl">
         <div className="grid grid-cols-2 gap-4">
           {[
-            { title: "Request Access", desc: "Join the TCecure Cyber Lab community and start your cybersecurity journey." },
+            { title: "Request Access", desc: "Join the Adroa Domain community and start your cybersecurity journey." },
             { title: "Contribute a Project", desc: "Share your expertise by contributing labs, tools, or educational content." },
             { title: "Get Involved", desc: "Connect with peers, mentors, and industry professionals in our community." },
             { title: "Learn More", desc: "Explore our comprehensive resources and hands-on learning opportunities." }
