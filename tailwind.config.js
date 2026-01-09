@@ -5,24 +5,24 @@ export default {
     extend: {
       colors: {
         brand: {
-          bg: "#1a1625",           // Warmer dark purple background
-          card: "#252238",         // Warmer card background
-          accent: "#00d4ff",       // Bright cyan accent
-          "accent-light": "#33ddff", // Lighter cyan for hover states
-          "accent-dark": "#00b8e6",  // Darker cyan for active states
-          secondary: "#ff6b9d",    // Warm pink secondary accent
-          "secondary-light": "#ff8fb3", // Lighter pink
+          bg: "#0a1628",           // Dark navy background (onecs.net style)
+          card: "#122035",         // Slightly lighter navy for cards
+          accent: "#00aff1",       // Bright cyan accent (onecs.net exact color)
+          "accent-light": "#33c4f5", // Lighter cyan for hover states
+          "accent-dark": "#0099d4",  // Darker cyan for active states
+          secondary: "#00aff1",    // Using cyan as secondary too for consistency
+          "secondary-light": "#33c4f5", // Lighter cyan
           neutral: {
             50: "#ffffff",         // Pure white
-            100: "#f8f9ff",        // Very light warm neutral
-            200: "#e8ebf7",        // Light warm neutral
-            300: "#d1d6e8",        // Medium-light warm neutral
-            400: "#9ca3c4",        // Medium warm neutral
-            500: "#6b7394",        // Base warm neutral
-            600: "#4a5578",        // Medium-dark warm neutral
-            700: "#363c5c",        // Dark warm neutral
-            800: "#252238",        // Very dark warm neutral
-            900: "#1a1625"         // Deepest warm neutral
+            100: "#f0f4f8",        // Very light neutral
+            200: "#d9e2ec",        // Light neutral
+            300: "#bcccdc",        // Medium-light neutral
+            400: "#9fb3c8",        // Medium neutral
+            500: "#627d98",        // Base neutral
+            600: "#486581",        // Medium-dark neutral
+            700: "#334e68",        // Dark neutral
+            800: "#243b53",        // Very dark neutral
+            900: "#102a43"         // Deepest neutral
           }
         }
       }

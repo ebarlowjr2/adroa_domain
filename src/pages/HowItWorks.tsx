@@ -21,41 +21,41 @@ const Architecture = () => (
     <svg viewBox="0 0 900 380" className="w-full h-auto">
       <defs>
         <linearGradient id="g1" x1="0" x2="1">
-          <stop offset="0%" stopColor="#22d3ee" stopOpacity="0.9"/>
-          <stop offset="100%" stopColor="#22d3ee" stopOpacity="0.2"/>
+          <stop offset="0%" stopColor="#00aff1" stopOpacity="0.9"/>
+          <stop offset="100%" stopColor="#00aff1" stopOpacity="0.2"/>
         </linearGradient>
       </defs>
 
       {/* Portal */}
-      <rect x="30" y="40" width="240" height="90" rx="14" fill="#0f1729" stroke="rgba(255,255,255,0.15)"/>
-      <text x="50" y="70" fill="#a3e7f5" fontSize="14" fontWeight="600">Portal (Vercel)</text>
-      <text x="50" y="96" fill="#cbd5e1" fontSize="12">Auth (Auth0, later)</text>
+      <rect x="30" y="40" width="240" height="90" rx="14" fill="#0a1628" stroke="rgba(255,255,255,0.15)"/>
+      <text x="50" y="70" fill="#33c4f5" fontSize="14" fontWeight="600">Portal (Vercel)</text>
+      <text x="50" y="96" fill="#d9e2ec" fontSize="12">Auth (Auth0, later)</text>
 
       {/* Gateway */}
-      <rect x="330" y="40" width="240" height="90" rx="14" fill="#0f1729" stroke="rgba(255,255,255,0.15)"/>
-      <text x="350" y="70" fill="#a3e7f5" fontSize="14" fontWeight="600">Lab Gateway</text>
-      <text x="350" y="96" fill="#cbd5e1" fontSize="12">Nginx+OIDC / Cloudflare Access</text>
+      <rect x="330" y="40" width="240" height="90" rx="14" fill="#0a1628" stroke="rgba(255,255,255,0.15)"/>
+      <text x="350" y="70" fill="#33c4f5" fontSize="14" fontWeight="600">Lab Gateway</text>
+      <text x="350" y="96" fill="#d9e2ec" fontSize="12">Nginx+OIDC / Cloudflare Access</text>
 
       {/* Sandboxes */}
-      <rect x="630" y="25" width="240" height="120" rx="14" fill="#0f1729" stroke="rgba(255,255,255,0.15)"/>
-      <text x="650" y="55" fill="#a3e7f5" fontSize="14" fontWeight="600">Sandboxes</text>
-      <text x="650" y="80" fill="#cbd5e1" fontSize="12">Guacamole · Jupyter · VS Code</text>
-      <text x="650" y="100" fill="#cbd5e1" fontSize="12">Wazuh · Zeek · Suricata</text>
+      <rect x="630" y="25" width="240" height="120" rx="14" fill="#0a1628" stroke="rgba(255,255,255,0.15)"/>
+      <text x="650" y="55" fill="#33c4f5" fontSize="14" fontWeight="600">Sandboxes</text>
+      <text x="650" y="80" fill="#d9e2ec" fontSize="12">Guacamole · Jupyter · VS Code</text>
+      <text x="650" y="100" fill="#d9e2ec" fontSize="12">Wazuh · Zeek · Suricata</text>
 
       {/* Data plane */}
-      <rect x="330" y="180" width="240" height="160" rx="14" fill="#0f1729" stroke="rgba(255,255,255,0.15)"/>
-      <text x="350" y="210" fill="#a3e7f5" fontSize="14" fontWeight="600">Data & Telemetry</text>
-      <text x="350" y="236" fill="#cbd5e1" fontSize="12">Supabase (profiles, progress)</text>
-      <text x="350" y="256" fill="#cbd5e1" fontSize="12">SIEM / Logs (Wazuh)</text>
-      <text x="350" y="276" fill="#cbd5e1" fontSize="12">Artifacts (reports, notes)</text>
+      <rect x="330" y="180" width="240" height="160" rx="14" fill="#0a1628" stroke="rgba(255,255,255,0.15)"/>
+      <text x="350" y="210" fill="#33c4f5" fontSize="14" fontWeight="600">Data & Telemetry</text>
+      <text x="350" y="236" fill="#d9e2ec" fontSize="12">Supabase (profiles, progress)</text>
+      <text x="350" y="256" fill="#d9e2ec" fontSize="12">SIEM / Logs (Wazuh)</text>
+      <text x="350" y="276" fill="#d9e2ec" fontSize="12">Artifacts (reports, notes)</text>
 
       {/* Arrows */}
       <path d="M270 85 H330" stroke="url(#g1)" strokeWidth="3"/>
-      <polygon points="330,85 320,80 320,90" fill="#22d3ee"/>
+      <polygon points="330,85 320,80 320,90" fill="#00aff1"/>
       <path d="M570 85 H630" stroke="url(#g1)" strokeWidth="3"/>
-      <polygon points="630,85 620,80 620,90" fill="#22d3ee"/>
+      <polygon points="630,85 620,80 620,90" fill="#00aff1"/>
       <path d="M750 145 V180" stroke="url(#g1)" strokeWidth="3"/>
-      <polygon points="750,180 745,170 755,170" fill="#22d3ee"/>
+      <polygon points="750,180 745,170 755,170" fill="#00aff1"/>
     </svg>
 
     <div className="mt-4 grid gap-3 text-xs text-white/70 md:grid-cols-3">
@@ -65,7 +65,7 @@ const Architecture = () => (
     </div>
 
     <div className="pointer-events-none absolute inset-0 -z-10 opacity-40 blur-2xl"
-         style={{ background: "radial-gradient(600px 200px at 70% 10%, rgba(34,211,238,0.2), transparent 60%)" }} />
+         style={{ background: "radial-gradient(600px 200px at 70% 10%, rgba(0,175,241,0.2), transparent 60%)" }} />
   </div>
 );
 
@@ -77,7 +77,7 @@ export default function HowItWorks() {
   return (
     <div className="relative min-h-screen overflow-hidden">
       {/* background aura */}
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_60%_at_70%_10%,rgba(34,211,238,0.15),transparent_60%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_60%_at_70%_10%,rgba(0,175,241,0.15),transparent_60%)]" />
 
       <main className="container mx-auto px-6 py-10">
         {/* HERO */}

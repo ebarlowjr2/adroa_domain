@@ -15,7 +15,7 @@ import Home from "./AppHome";
 export default function App() {
   return (
     <div className="relative min-h-screen overflow-hidden bg-brand-bg">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_60%_at_70%_10%,rgba(0,212,255,0.15),transparent_60%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_60%_at_70%_10%,rgba(0,175,241,0.15),transparent_60%)]" />
       <header className="container mx-auto flex items-center justify-between px-6 py-6">
         <Link to="/" className="font-semibold tracking-wide">Adroa Domain</Link>
         <nav className="flex gap-3">
