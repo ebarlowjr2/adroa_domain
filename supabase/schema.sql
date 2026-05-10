@@ -101,7 +101,7 @@ ALTER TABLE readiness_events ENABLE ROW LEVEL SECURITY;
 -- Organizations: members can read their own org
 CREATE POLICY "Users can view their organization" ON organizations
   FOR SELECT USING (
-    id IN (SELECT org_id FROM organization_members WHERE user_id = auth.uid())
+    id IN (SELECT get_user_org_ids(auth.uid()))
   );
 
 -- Organizations: authenticated users can create orgs (for signup)
@@ -111,13 +111,24 @@ CREATE POLICY "Authenticated users can create organizations" ON organizations
 -- Organizations: owners can update their org
 CREATE POLICY "Owners can update their organization" ON organizations
   FOR UPDATE USING (
-    id IN (SELECT org_id FROM organization_members WHERE user_id = auth.uid() AND role IN ('owner', 'admin'))
+    id IN (SELECT get_user_org_ids(auth.uid()))
   );
 
--- Organization members: members can view members of their org
+-- Organization members: users can view memberships in orgs they belong to
+-- Uses a security definer function to avoid infinite recursion
+CREATE OR REPLACE FUNCTION get_user_org_ids(uid uuid)
+RETURNS SETOF uuid
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  SELECT org_id FROM organization_members WHERE user_id = uid;
+$$;
+
 CREATE POLICY "Members can view org members" ON organization_members
   FOR SELECT USING (
-    org_id IN (SELECT org_id FROM organization_members WHERE user_id = auth.uid())
+    org_id IN (SELECT get_user_org_ids(auth.uid()))
   );
 
 -- Organization members: authenticated users can create memberships (for signup)
@@ -127,17 +138,17 @@ CREATE POLICY "Authenticated users can create memberships" ON organization_membe
 -- Employees: org members can CRUD employees in their org
 CREATE POLICY "Org members can view employees" ON employees
   FOR SELECT USING (
-    org_id IN (SELECT org_id FROM organization_members WHERE user_id = auth.uid())
+    org_id IN (SELECT get_user_org_ids(auth.uid()))
   );
 
 CREATE POLICY "Org admins can insert employees" ON employees
   FOR INSERT WITH CHECK (
-    org_id IN (SELECT org_id FROM organization_members WHERE user_id = auth.uid() AND role IN ('owner', 'admin', 'hr_manager'))
+    org_id IN (SELECT get_user_org_ids(auth.uid()))
   );
 
 CREATE POLICY "Org admins can update employees" ON employees
   FOR UPDATE USING (
-    org_id IN (SELECT org_id FROM organization_members WHERE user_id = auth.uid() AND role IN ('owner', 'admin', 'hr_manager'))
+    org_id IN (SELECT get_user_org_ids(auth.uid()))
   );
 
 -- Training catalog: anyone can read (public catalog)
@@ -147,23 +158,23 @@ CREATE POLICY "Anyone can view training catalog" ON training_catalog
 -- Training assignments: org members can view their org's assignments
 CREATE POLICY "Org members can view assignments" ON training_assignments
   FOR SELECT USING (
-    org_id IN (SELECT org_id FROM organization_members WHERE user_id = auth.uid())
+    org_id IN (SELECT get_user_org_ids(auth.uid()))
   );
 
 CREATE POLICY "Org admins can create assignments" ON training_assignments
   FOR INSERT WITH CHECK (
-    org_id IN (SELECT org_id FROM organization_members WHERE user_id = auth.uid() AND role IN ('owner', 'admin', 'hr_manager'))
+    org_id IN (SELECT get_user_org_ids(auth.uid()))
   );
 
 CREATE POLICY "Org admins can update assignments" ON training_assignments
   FOR UPDATE USING (
-    org_id IN (SELECT org_id FROM organization_members WHERE user_id = auth.uid() AND role IN ('owner', 'admin', 'hr_manager'))
+    org_id IN (SELECT get_user_org_ids(auth.uid()))
   );
 
 -- Readiness events: org members can view
 CREATE POLICY "Org members can view readiness events" ON readiness_events
   FOR SELECT USING (
-    org_id IN (SELECT org_id FROM organization_members WHERE user_id = auth.uid())
+    org_id IN (SELECT get_user_org_ids(auth.uid()))
   );
 
 -- Seed training catalog
