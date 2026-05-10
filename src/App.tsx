@@ -1,4 +1,5 @@
-import { Routes, Route, Link } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
+import Landing from "./pages/Landing";
 import HowItWorks from "./pages/HowItWorks";
 import LearningPaths from "./pages/LearningPaths";
 import StarterProjects from "./pages/StarterProjects";
@@ -10,33 +11,40 @@ import XSSLab from "./pages/XSSLab";
 import IDORLab from "./pages/IDORLab";
 import PriceTamperingLab from "./pages/PriceTamperingLab";
 import JWTLab from "./pages/JWTLab";
-import Home from "./AppHome";
+import Signup from "./pages/org/Signup";
+import Login from "./pages/org/Login";
+import Dashboard from "./pages/dashboard/Dashboard";
+import Employees from "./pages/dashboard/Employees";
+import Training from "./pages/dashboard/Training";
+import Readiness from "./pages/dashboard/Readiness";
+import { ProtectedRoute } from "./components/dashboard/ProtectedRoute";
 
 export default function App() {
   return (
-    <div className="relative min-h-screen overflow-hidden bg-brand-bg">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_60%_at_70%_10%,rgba(0,175,241,0.15),transparent_60%)]" />
-      <header className="container mx-auto flex items-center justify-between px-6 py-6">
-        <Link to="/" className="font-semibold tracking-wide">Adroa Domain</Link>
-        <nav className="flex gap-3">
-          <Link className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm hover:bg-white/10" to="/how-it-works">How it works</Link>
-          <Link className="rounded-xl bg-brand-accent/90 px-4 py-2 text-sm font-medium text-black hover:bg-brand-accent" to="#">Login</Link>
-        </nav>
-      </header>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/how-it-works" element={<HowItWorks />} />
-        <Route path="/learning-paths" element={<LearningPaths />} />
-        <Route path="/starter-projects" element={<StarterProjects />} />
-        <Route path="/scap-scanning-guide" element={<ScapScanningGuide />} />
-        <Route path="/pen-testing-labs" element={<PenTestingLabs />} />
-        <Route path="/cybersecurity-frameworks" element={<CybersecurityFrameworks />} />
-        <Route path="/lab/login-bypass-sqli" element={<LoginBypassLab />} />
-        <Route path="/lab/stored-reflected-xss" element={<XSSLab />} />
-        <Route path="/lab/idor-rest-endpoints" element={<IDORLab />} />
-        <Route path="/lab/price-quantity-tampering" element={<PriceTamperingLab />} />
-        <Route path="/lab/jwt-cookie-manipulation" element={<JWTLab />} />
-      </Routes>
-    </div>
+    <Routes>
+      {/* Public pages */}
+      <Route path="/" element={<Landing />} />
+      <Route path="/how-it-works" element={<HowItWorks />} />
+      <Route path="/learning-paths" element={<LearningPaths />} />
+      <Route path="/starter-projects" element={<StarterProjects />} />
+      <Route path="/scap-scanning-guide" element={<ScapScanningGuide />} />
+      <Route path="/pen-testing-labs" element={<PenTestingLabs />} />
+      <Route path="/cybersecurity-frameworks" element={<CybersecurityFrameworks />} />
+      <Route path="/lab/login-bypass-sqli" element={<LoginBypassLab />} />
+      <Route path="/lab/stored-reflected-xss" element={<XSSLab />} />
+      <Route path="/lab/idor-rest-endpoints" element={<IDORLab />} />
+      <Route path="/lab/price-quantity-tampering" element={<PriceTamperingLab />} />
+      <Route path="/lab/jwt-cookie-manipulation" element={<JWTLab />} />
+
+      {/* Auth */}
+      <Route path="/org/signup" element={<Signup />} />
+      <Route path="/org/login" element={<Login />} />
+
+      {/* Dashboard (protected) */}
+      <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+      <Route path="/dashboard/employees" element={<ProtectedRoute><Employees /></ProtectedRoute>} />
+      <Route path="/dashboard/training" element={<ProtectedRoute><Training /></ProtectedRoute>} />
+      <Route path="/dashboard/readiness" element={<ProtectedRoute><Readiness /></ProtectedRoute>} />
+    </Routes>
   );
 }
