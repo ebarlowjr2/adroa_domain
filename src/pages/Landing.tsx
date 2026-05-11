@@ -37,7 +37,7 @@ export default function Landing() {
             Dashboard Login
           </Link>
           <Link
-            to="/org/signup"
+            to="/get-started"
             className="rounded-xl bg-brand-accent/90 px-4 py-2 text-sm font-medium text-black hover:bg-brand-accent"
           >
             Get Started
@@ -61,7 +61,7 @@ export default function Landing() {
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
             <Link
-              to="/org/signup"
+              to="/get-started"
               className="inline-flex items-center gap-2 rounded-xl bg-brand-accent px-6 py-3 font-medium text-black shadow-lg shadow-brand-accent/25 transition-colors hover:bg-brand-accent-light"
             >
               Start Learning <ArrowRight size={18} />
@@ -189,7 +189,7 @@ export default function Landing() {
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
               <Link
-                to="/org/signup"
+                to="/get-started"
                 className="inline-flex items-center gap-2 rounded-xl bg-brand-accent px-6 py-3 font-medium text-black shadow-lg shadow-brand-accent/25 transition-colors hover:bg-brand-accent-light"
               >
                 Get Started Free <ArrowRight size={18} />
