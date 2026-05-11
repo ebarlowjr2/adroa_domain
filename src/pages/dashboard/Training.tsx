@@ -1,0 +1,341 @@
+import { useEffect, useState, useCallback } from 'react'
+import { useAuth } from '@/contexts/AuthContext'
+import { supabase } from '@/lib/supabase'
+import { DashboardLayout } from '@/components/dashboard/DashboardLayout'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Select } from '@/components/ui/select'
+import { Badge } from '@/components/ui/badge'
+import { Dialog, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { BookOpen, Send, ExternalLink } from 'lucide-react'
+import { getCourseUrl } from '@/services/learnhouse'
+import type { TrainingCatalog, Employee, TrainingAssignment } from '@/lib/types'
+
+export default function Training() {
+  const { organization } = useAuth()
+  const [catalog, setCatalog] = useState<TrainingCatalog[]>([])
+  const [employees, setEmployees] = useState<Employee[]>([])
+  const [assignments, setAssignments] = useState<(TrainingAssignment & { employee?: Employee; training?: TrainingCatalog })[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showAssignDialog, setShowAssignDialog] = useState(false)
+  const [assignForm, setAssignForm] = useState({
+    training_id: '',
+    employee_ids: [] as string[],
+    department: '',
+    due_date: '',
+    assign_to: 'individual' as 'individual' | 'department' | 'all',
+  })
+  const [assignLoading, setAssignLoading] = useState(false)
+  const [assignError, setAssignError] = useState('')
+  const [statusFilter, setStatusFilter] = useState('')
+
+  const loadData = useCallback(async () => {
+    if (!organization) return
+
+    const [catalogRes, empRes, assignRes] = await Promise.all([
+      supabase.from('training_catalog').select('*').eq('active', true).order('title'),
+      supabase.from('employees').select('*').eq('org_id', organization.id).eq('status', 'active'),
+      supabase.from('training_assignments')
+        .select('*, employee:employees(*), training:training_catalog(*)')
+        .eq('org_id', organization.id)
+        .order('created_at', { ascending: false }),
+    ])
+
+    setCatalog((catalogRes.data as TrainingCatalog[]) || [])
+    setEmployees((empRes.data as Employee[]) || [])
+    setAssignments(assignRes.data || [])
+    setLoading(false)
+  }, [organization])
+
+  useEffect(() => {
+    loadData()
+  }, [loadData])
+
+  const handleAssign = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!organization) return
+    setAssignLoading(true)
+    setAssignError('')
+
+    let targetEmployeeIds: string[] = []
+
+    if (assignForm.assign_to === 'all') {
+      targetEmployeeIds = employees.map(e => e.id)
+    } else if (assignForm.assign_to === 'department') {
+      targetEmployeeIds = employees.filter(e => e.department === assignForm.department).map(e => e.id)
+    } else {
+      targetEmployeeIds = assignForm.employee_ids
+    }
+
+    if (targetEmployeeIds.length === 0) {
+      setAssignError('No employees selected')
+      setAssignLoading(false)
+      return
+    }
+
+    const records = targetEmployeeIds.map(empId => ({
+      org_id: organization.id,
+      employee_id: empId,
+      training_id: assignForm.training_id,
+      assigned_by: organization.id,
+      due_date: assignForm.due_date,
+      status: 'assigned',
+    }))
+
+    const { error } = await supabase.from('training_assignments').insert(records)
+
+    if (error) {
+      setAssignError(error.message)
+      setAssignLoading(false)
+      return
+    }
+
+    setAssignLoading(false)
+    setShowAssignDialog(false)
+    setAssignForm({ training_id: '', employee_ids: [], department: '', due_date: '', assign_to: 'individual' })
+    loadData()
+  }
+
+  const toggleEmployeeSelection = (empId: string) => {
+    setAssignForm(prev => ({
+      ...prev,
+      employee_ids: prev.employee_ids.includes(empId)
+        ? prev.employee_ids.filter(id => id !== empId)
+        : [...prev.employee_ids, empId]
+    }))
+  }
+
+  const departments = [...new Set(employees.map(e => e.department).filter(Boolean))]
+
+  const filteredAssignments = assignments.filter(a => {
+    if (!statusFilter) return true
+    return a.status === statusFilter
+  })
+
+  return (
+    <DashboardLayout>
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-white">Training</h1>
+          <p className="text-sm text-white/60">Manage and assign cybersecurity training</p>
+        </div>
+        <Button onClick={() => setShowAssignDialog(true)}>
+          <Send size={16} className="mr-2" />
+          Assign Training
+        </Button>
+      </div>
+
+      {/* Training Catalog */}
+      <div className="mb-8">
+        <h2 className="mb-4 text-lg font-semibold text-white">Training Catalog</h2>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {loading ? (
+            <div className="col-span-full flex justify-center py-8">
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-accent border-t-transparent" />
+            </div>
+          ) : catalog.length === 0 ? (
+            <div className="col-span-full rounded-2xl border border-white/10 bg-brand-card p-8 text-center text-white/40">
+              No training courses available
+            </div>
+          ) : (
+            catalog.map(course => {
+              const assignedCount = assignments.filter(a => a.training_id === course.id).length
+              const completedCount = assignments.filter(a => a.training_id === course.id && a.status === 'completed').length
+              return (
+                <div key={course.id} className="rounded-2xl border border-white/10 bg-brand-card p-5 transition-all hover:border-brand-accent/30">
+                  <div className="flex items-start justify-between mb-2">
+                    <BookOpen size={18} className="mt-0.5 text-brand-accent" />
+                    {course.required_default && <Badge variant="warning">Required</Badge>}
+                  </div>
+                  <h3 className="font-semibold text-white">{course.title}</h3>
+                  <p className="mt-1 text-xs text-white/50">{course.description}</p>
+                  <div className="mt-3 flex items-center justify-between text-xs text-white/40">
+                    <span>{course.estimated_minutes} min</span>
+                    <span>{completedCount}/{assignedCount} completed</span>
+                  </div>
+                  {course.learnhouse_course_id && (
+                    <a
+                      href={getCourseUrl(course.learnhouse_course_id)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2 inline-flex items-center gap-1 text-xs text-brand-accent hover:underline"
+                    >
+                      View in LearnHouse <ExternalLink size={10} />
+                    </a>
+                  )}
+                </div>
+              )
+            })
+          )}
+        </div>
+      </div>
+
+      {/* Assignments Table */}
+      <div>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-white">Assignments</h2>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="h-9 rounded-lg border border-white/10 bg-white/5 px-3 text-sm text-white focus:outline-none"
+          >
+            <option value="">All Status</option>
+            <option value="assigned">Assigned</option>
+            <option value="in_progress">In Progress</option>
+            <option value="completed">Completed</option>
+            <option value="overdue">Overdue</option>
+          </select>
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-brand-card overflow-hidden">
+          {filteredAssignments.length === 0 ? (
+            <div className="p-8 text-center text-white/40">
+              <p>No assignments {statusFilter ? `with status "${statusFilter}"` : 'yet'}</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-white/10 text-left text-xs uppercase tracking-wider text-white/50">
+                    <th className="px-4 py-3">Employee</th>
+                    <th className="px-4 py-3">Training</th>
+                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3">Due Date</th>
+                    <th className="px-4 py-3">Assigned</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {filteredAssignments.map((a) => (
+                    <tr key={a.id} className="hover:bg-white/5">
+                      <td className="px-4 py-3 text-sm text-white">
+                        {a.employee ? `${a.employee.first_name} ${a.employee.last_name}` : '—'}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-white/70">{a.training?.title || '—'}</td>
+                      <td className="px-4 py-3">
+                        <Badge
+                          variant={
+                            a.status === 'completed' ? 'success' :
+                            a.status === 'overdue' ? 'danger' :
+                            a.status === 'in_progress' ? 'warning' : 'default'
+                          }
+                        >
+                          {a.status}
+                        </Badge>
+                      </td>
+                      <td className="px-4 py-3 text-sm text-white/50">
+                        {new Date(a.due_date).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-white/50">
+                        {new Date(a.created_at).toLocaleDateString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Assign Dialog */}
+      <Dialog open={showAssignDialog} onClose={() => setShowAssignDialog(false)} className="max-w-xl">
+        <DialogHeader>
+          <DialogTitle>Assign Training</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={handleAssign} className="space-y-4">
+          <Select
+            id="training_id"
+            label="Training Course"
+            value={assignForm.training_id}
+            onChange={(e) => setAssignForm(prev => ({ ...prev, training_id: e.target.value }))}
+            required
+          >
+            <option value="">Select a course...</option>
+            {catalog.map(c => (
+              <option key={c.id} value={c.id}>{c.title}</option>
+            ))}
+          </Select>
+
+          <div className="space-y-1.5">
+            <label className="block text-sm font-medium text-white/80">Assign To</label>
+            <div className="flex gap-2">
+              {(['individual', 'department', 'all'] as const).map(opt => (
+                <button
+                  key={opt}
+                  type="button"
+                  onClick={() => setAssignForm(prev => ({ ...prev, assign_to: opt }))}
+                  className={`rounded-lg px-3 py-1.5 text-sm transition-colors ${
+                    assignForm.assign_to === opt
+                      ? 'bg-brand-accent/20 text-brand-accent'
+                      : 'bg-white/5 text-white/60 hover:bg-white/10'
+                  }`}
+                >
+                  {opt === 'individual' ? 'Individual' : opt === 'department' ? 'Department' : 'All Employees'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {assignForm.assign_to === 'individual' && (
+            <div className="space-y-1.5">
+              <label className="block text-sm font-medium text-white/80">Select Employees</label>
+              <div className="max-h-40 overflow-y-auto rounded-lg border border-white/10 bg-white/5 p-2 space-y-1">
+                {employees.map(emp => (
+                  <label key={emp.id} className="flex items-center gap-2 rounded px-2 py-1 text-sm text-white hover:bg-white/5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={assignForm.employee_ids.includes(emp.id)}
+                      onChange={() => toggleEmployeeSelection(emp.id)}
+                      className="rounded border-white/20"
+                    />
+                    {emp.first_name} {emp.last_name}
+                    {emp.department && <span className="text-white/40">({emp.department})</span>}
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {assignForm.assign_to === 'department' && (
+            <Select
+              id="assign_dept"
+              label="Department"
+              value={assignForm.department}
+              onChange={(e) => setAssignForm(prev => ({ ...prev, department: e.target.value }))}
+              required
+            >
+              <option value="">Select department...</option>
+              {departments.map(d => (
+                <option key={d} value={d}>{d} ({employees.filter(e => e.department === d).length} employees)</option>
+              ))}
+            </Select>
+          )}
+
+          <Input
+            id="due_date"
+            type="date"
+            label="Due Date"
+            value={assignForm.due_date}
+            onChange={(e) => setAssignForm(prev => ({ ...prev, due_date: e.target.value }))}
+            required
+          />
+
+          {assignError && (
+            <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-sm text-red-400">
+              {assignError}
+            </div>
+          )}
+
+          <div className="flex gap-3 justify-end pt-2">
+            <Button type="button" variant="outline" onClick={() => setShowAssignDialog(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={assignLoading}>
+              {assignLoading ? 'Assigning...' : 'Assign Training'}
+            </Button>
+          </div>
+        </form>
+      </Dialog>
+    </DashboardLayout>
+  )
+}
