@@ -13,13 +13,45 @@ interface AuthState {
 }
 
 interface AuthContextType extends AuthState {
-  signUp: (email: string, password: string, orgName: string, firstName: string, lastName: string, companySize: string, plan: string) => Promise<{ error: string | null }>
+  signUp: (email: string, password: string, orgName: string, firstName: string, lastName: string, companySize: string, plan: string) => Promise<{ error: string | null; needsConfirmation?: boolean }>
   signIn: (email: string, password: string) => Promise<{ error: string | null }>
   signOut: () => Promise<void>
   refreshOrg: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
+
+async function createOrganization(userId: string, orgName: string, plan: string): Promise<{ error: string | null }> {
+  const slug = orgName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+  const seatLimit = plan === 'starter' ? 25 : 5
+
+  const { data: org, error: orgError } = await supabase
+    .from('organizations')
+    .insert({
+      name: orgName,
+      slug,
+      plan,
+      seat_limit: seatLimit,
+      status: 'active',
+    })
+    .select()
+    .single()
+
+  if (orgError) return { error: orgError.message }
+
+  const { error: memberError } = await supabase
+    .from('organization_members')
+    .insert({
+      org_id: org.id,
+      user_id: userId,
+      role: 'owner',
+      status: 'active',
+    })
+
+  if (memberError) return { error: memberError.message }
+
+  return { error: null }
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AuthState>({
@@ -66,9 +98,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setState(prev => ({ ...prev, user: session?.user ?? null, session }))
       if (session?.user) {
+        // When user confirms email and signs in for the first time,
+        // check if they need an org created from their signup metadata
+        if (event === 'SIGNED_IN') {
+          const { data: existingMember } = await supabase
+            .from('organization_members')
+            .select('id')
+            .eq('user_id', session.user.id)
+            .single()
+
+          if (!existingMember) {
+            const meta = session.user.user_metadata
+            if (meta?.org_name) {
+              await createOrganization(
+                session.user.id,
+                meta.org_name as string,
+                (meta.plan as string) || 'free'
+              )
+            }
+          }
+        }
         loadOrgData(session.user.id)
       } else {
         setState(prev => ({
@@ -89,52 +141,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     orgName: string,
     firstName: string,
     lastName: string,
-    companySize: string,
+    _companySize: string,
     plan: string
   ) => {
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { first_name: firstName, last_name: lastName },
+        data: {
+          first_name: firstName,
+          last_name: lastName,
+          org_name: orgName,
+          plan,
+        },
       },
     })
 
     if (authError) return { error: authError.message }
     if (!authData.user) return { error: 'Signup failed' }
 
-    const slug = orgName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
-    const seatLimit = plan === 'starter' ? 25 : 5
+    // Check if the user's email is confirmed (auto-confirm may be off)
+    const session = authData.session
+    if (!session) {
+      // No session means email confirmation is required
+      // Org details are stored in user metadata and will be created on first sign-in
+      return { error: null, needsConfirmation: true }
+    }
 
-    const { data: org, error: orgError } = await supabase
-      .from('organizations')
-      .insert({
-        name: orgName,
-        slug,
-        plan,
-        seat_limit: seatLimit,
-        status: 'active',
-      })
-      .select()
-      .single()
-
-    if (orgError) return { error: orgError.message }
-
-    const { error: memberError } = await supabase
-      .from('organization_members')
-      .insert({
-        org_id: org.id,
-        user_id: authData.user.id,
-        role: 'owner',
-        status: 'active',
-      })
-
-    if (memberError) return { error: memberError.message }
-
-    // Store company size as metadata
-    await supabase.from('organizations').update({
-      updated_at: new Date().toISOString(),
-    }).eq('id', org.id)
+    // Session exists — email was auto-confirmed, create org now
+    const orgResult = await createOrganization(authData.user.id, orgName, plan)
+    if (orgResult.error) return { error: orgResult.error }
 
     return { error: null }
   }

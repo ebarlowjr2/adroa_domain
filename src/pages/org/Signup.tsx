@@ -10,6 +10,7 @@ export default function Signup() {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [confirmationSent, setConfirmationSent] = useState(false)
   const [form, setForm] = useState({
     orgName: '',
     firstName: '',
@@ -29,7 +30,7 @@ export default function Signup() {
     setError('')
     setLoading(true)
 
-    const { error: signUpError } = await signUp(
+    const result = await signUp(
       form.email,
       form.password,
       form.orgName,
@@ -39,13 +40,56 @@ export default function Signup() {
       form.plan
     )
 
-    if (signUpError) {
-      setError(signUpError)
+    if (result.error) {
+      setError(result.error)
+      setLoading(false)
+      return
+    }
+
+    if (result.needsConfirmation) {
+      setConfirmationSent(true)
       setLoading(false)
       return
     }
 
     navigate('/dashboard')
+  }
+
+  if (confirmationSent) {
+    return (
+      <div className="relative min-h-screen overflow-hidden bg-brand-bg">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_60%_at_70%_10%,rgba(0,175,241,0.15),transparent_60%)]" />
+        <div className="container mx-auto flex min-h-screen items-center justify-center px-6 py-12">
+          <div className="w-full max-w-md text-center">
+            <Link to="/" className="text-2xl font-bold text-brand-accent">
+              Adroa Domain
+            </Link>
+            <h1 className="mt-4 text-3xl font-bold text-white">Check your email</h1>
+            <p className="mt-2 text-white/60">
+              We sent a confirmation link to <span className="text-white font-medium">{form.email}</span>.
+              Click the link to activate your account, then sign in.
+            </p>
+            <div className="mt-6 rounded-xl border border-brand-accent/20 bg-brand-accent/5 p-6 text-left">
+              <p className="text-sm text-white/70">
+                Didn&apos;t receive the email? Check your spam folder or{' '}
+                <button
+                  onClick={() => setConfirmationSent(false)}
+                  className="text-brand-accent hover:underline"
+                >
+                  try signing up again
+                </button>.
+              </p>
+            </div>
+            <p className="mt-6 text-sm text-white/50">
+              Already confirmed?{' '}
+              <Link to="/org/login" className="text-brand-accent hover:underline">
+                Sign in
+              </Link>
+            </p>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
