@@ -11,6 +11,7 @@ import XSSLab from "./pages/XSSLab";
 import IDORLab from "./pages/IDORLab";
 import PriceTamperingLab from "./pages/PriceTamperingLab";
 import JWTLab from "./pages/JWTLab";
+import GetStarted from "./pages/GetStarted";
 import Signup from "./pages/org/Signup";
 import Login from "./pages/org/Login";
 import Dashboard from "./pages/dashboard/Dashboard";
@@ -35,6 +36,9 @@ export default function App() {
       <Route path="/lab/idor-rest-endpoints" element={<IDORLab />} />
       <Route path="/lab/price-quantity-tampering" element={<PriceTamperingLab />} />
       <Route path="/lab/jwt-cookie-manipulation" element={<JWTLab />} />
+
+      {/* Get Started */}
+      <Route path="/get-started" element={<GetStarted />} />
 
       {/* Auth */}
       <Route path="/org/signup" element={<Signup />} />
