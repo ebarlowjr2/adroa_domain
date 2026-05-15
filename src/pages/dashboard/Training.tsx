@@ -7,8 +7,9 @@ import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { BookOpen, Send, ExternalLink } from 'lucide-react'
-import { getCourseUrl } from '@/services/learnhouse'
+import { BookOpen, Send, ExternalLink, Plus, Library, Check, Loader2, Search } from 'lucide-react'
+import { getCourseUrl, fetchCourseList, getCategoryFromTags, estimateMinutesFromAbout } from '@/services/learnhouse'
+import type { LearnHouseCourse } from '@/services/learnhouse'
 import type { TrainingCatalog, Employee, TrainingAssignment } from '@/lib/types'
 
 export default function Training() {
@@ -18,6 +19,7 @@ export default function Training() {
   const [assignments, setAssignments] = useState<(TrainingAssignment & { employee?: Employee; training?: TrainingCatalog })[]>([])
   const [loading, setLoading] = useState(true)
   const [showAssignDialog, setShowAssignDialog] = useState(false)
+  const [showLibraryDialog, setShowLibraryDialog] = useState(false)
   const [assignForm, setAssignForm] = useState({
     training_id: '',
     employee_ids: [] as string[],
@@ -28,6 +30,12 @@ export default function Training() {
   const [assignLoading, setAssignLoading] = useState(false)
   const [assignError, setAssignError] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
+
+  // Course Library state
+  const [libraryCourses, setLibraryCourses] = useState<LearnHouseCourse[]>([])
+  const [libraryLoading, setLibraryLoading] = useState(false)
+  const [librarySearch, setLibrarySearch] = useState('')
+  const [addingCourseId, setAddingCourseId] = useState<string | null>(null)
 
   const loadData = useCallback(async () => {
     if (!organization) return
@@ -50,6 +58,45 @@ export default function Training() {
   useEffect(() => {
     loadData()
   }, [loadData])
+
+  const openLibrary = async () => {
+    setShowLibraryDialog(true)
+    setLibraryLoading(true)
+    const courses = await fetchCourseList()
+    setLibraryCourses(courses)
+    setLibraryLoading(false)
+  }
+
+  const isCourseInCatalog = (courseUuid: string): boolean => {
+    return catalog.some(c => c.learnhouse_course_id === courseUuid)
+  }
+
+  const addCourseToCatalog = async (course: LearnHouseCourse) => {
+    setAddingCourseId(course.course_uuid)
+    const category = getCategoryFromTags(course.tags || '')
+    const minutes = estimateMinutesFromAbout(course.about || '')
+
+    const { error } = await supabase.from('training_catalog').insert({
+      title: course.name,
+      description: course.description,
+      category,
+      required_default: false,
+      learnhouse_course_id: course.course_uuid,
+      estimated_minutes: minutes,
+      active: true,
+    })
+
+    if (!error) {
+      await loadData()
+    }
+    setAddingCourseId(null)
+  }
+
+  const filteredLibraryCourses = libraryCourses.filter(c => {
+    if (!librarySearch) return true
+    const q = librarySearch.toLowerCase()
+    return c.name.toLowerCase().includes(q) || c.description.toLowerCase().includes(q) || (c.tags || '').toLowerCase().includes(q)
+  })
 
   const handleAssign = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -119,10 +166,16 @@ export default function Training() {
           <h1 className="text-2xl font-bold text-white">Training</h1>
           <p className="text-sm text-white/60">Manage and assign cybersecurity training</p>
         </div>
-        <Button onClick={() => setShowAssignDialog(true)}>
-          <Send size={16} className="mr-2" />
-          Assign Training
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={openLibrary}>
+            <Library size={16} className="mr-2" />
+            Course Library
+          </Button>
+          <Button onClick={() => setShowAssignDialog(true)}>
+            <Send size={16} className="mr-2" />
+            Assign Training
+          </Button>
+        </div>
       </div>
 
       {/* Training Catalog */}
@@ -134,8 +187,13 @@ export default function Training() {
               <div className="h-6 w-6 animate-spin rounded-full border-2 border-brand-accent border-t-transparent" />
             </div>
           ) : catalog.length === 0 ? (
-            <div className="col-span-full rounded-2xl border border-white/10 bg-brand-card p-8 text-center text-white/40">
-              No training courses available
+            <div className="col-span-full rounded-2xl border border-white/10 bg-brand-card p-8 text-center">
+              <Library size={32} className="mx-auto mb-3 text-white/30" />
+              <p className="text-white/60 mb-3">No training courses in your catalog yet</p>
+              <Button variant="outline" size="sm" onClick={openLibrary}>
+                <Plus size={14} className="mr-1.5" />
+                Browse Course Library
+              </Button>
             </div>
           ) : (
             catalog.map(course => {
@@ -335,6 +393,100 @@ export default function Training() {
             </Button>
           </div>
         </form>
+      </Dialog>
+
+      {/* Course Library Dialog */}
+      <Dialog open={showLibraryDialog} onClose={() => setShowLibraryDialog(false)} className="max-w-3xl max-h-[85vh] flex flex-col">
+        <DialogHeader>
+          <DialogTitle>Course Library</DialogTitle>
+          <p className="text-sm text-white/50 mt-1">
+            Browse courses from LearnHouse and add them to your training catalog
+          </p>
+        </DialogHeader>
+
+        <div className="relative mb-4">
+          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
+          <input
+            type="text"
+            placeholder="Search courses..."
+            value={librarySearch}
+            onChange={(e) => setLibrarySearch(e.target.value)}
+            className="w-full rounded-lg border border-white/10 bg-white/5 py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-white/30 focus:border-brand-accent/50 focus:outline-none"
+          />
+        </div>
+
+        <div className="flex-1 overflow-y-auto -mx-6 px-6 space-y-3">
+          {libraryLoading ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <Loader2 size={24} className="animate-spin text-brand-accent mb-3" />
+              <p className="text-sm text-white/50">Loading courses from LearnHouse...</p>
+            </div>
+          ) : filteredLibraryCourses.length === 0 ? (
+            <div className="text-center py-12 text-white/40">
+              {librarySearch ? 'No courses match your search' : 'No courses available'}
+            </div>
+          ) : (
+            filteredLibraryCourses.map(course => {
+              const alreadyAdded = isCourseInCatalog(course.course_uuid)
+              const isAdding = addingCourseId === course.course_uuid
+              return (
+                <div
+                  key={course.course_uuid}
+                  className={`rounded-xl border p-4 transition-all ${
+                    alreadyAdded
+                      ? 'border-emerald-500/20 bg-emerald-500/5'
+                      : 'border-white/10 bg-white/[0.03] hover:border-brand-accent/30'
+                  }`}
+                >
+                  <div className="flex gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-semibold text-white truncate">{course.name}</h3>
+                        <Badge variant="outline">{getCategoryFromTags(course.tags || '')}</Badge>
+                      </div>
+                      <p className="text-xs text-white/50 line-clamp-2">{course.description}</p>
+                      <div className="flex items-center gap-3 mt-2 text-xs text-white/40">
+                        <span>{estimateMinutesFromAbout(course.about || '')} min</span>
+                        {(course.tags || '').split(',').filter(Boolean).slice(0, 3).map(tag => (
+                          <span key={tag.trim()} className="rounded-full bg-white/5 px-2 py-0.5">{tag.trim()}</span>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex-shrink-0 flex items-start">
+                      {alreadyAdded ? (
+                        <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500/20 px-3 py-1.5 text-xs font-medium text-emerald-400">
+                          <Check size={14} /> In Catalog
+                        </span>
+                      ) : (
+                        <Button
+                          size="sm"
+                          onClick={() => addCourseToCatalog(course)}
+                          disabled={isAdding}
+                        >
+                          {isAdding ? (
+                            <Loader2 size={14} className="animate-spin mr-1.5" />
+                          ) : (
+                            <Plus size={14} className="mr-1.5" />
+                          )}
+                          {isAdding ? 'Adding...' : 'Add to Catalog'}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )
+            })
+          )}
+        </div>
+
+        <div className="flex justify-between items-center pt-4 mt-4 border-t border-white/10">
+          <p className="text-xs text-white/40">
+            {filteredLibraryCourses.length} course{filteredLibraryCourses.length !== 1 ? 's' : ''} available
+          </p>
+          <Button variant="outline" onClick={() => setShowLibraryDialog(false)}>
+            Done
+          </Button>
+        </div>
       </Dialog>
     </DashboardLayout>
   )

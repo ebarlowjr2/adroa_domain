@@ -155,6 +155,10 @@ CREATE POLICY "Org admins can update employees" ON employees
 CREATE POLICY "Anyone can view training catalog" ON training_catalog
   FOR SELECT USING (true);
 
+-- Training catalog: org admins can add courses
+CREATE POLICY "Org admins can insert training catalog" ON training_catalog
+  FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
+
 -- Training assignments: org members can view their org's assignments
 CREATE POLICY "Org members can view assignments" ON training_assignments
   FOR SELECT USING (
