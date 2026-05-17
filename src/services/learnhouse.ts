@@ -41,6 +41,31 @@ export async function fetchCourseList(): Promise<LearnHouseCourse[]> {
   }
 }
 
+export interface LearnHouseCollection {
+  id: number
+  collection_uuid: string
+  name: string
+  description: string
+  public: boolean
+  courses: LearnHouseCourse[]
+}
+
+export async function fetchCollectionList(): Promise<LearnHouseCollection[]> {
+  try {
+    const res = await fetch(`${LEARNHOUSE_BASE_URL}/collections/org/1/page/1/limit/50`)
+    if (!res.ok) return []
+    const data: LearnHouseCollection[] = await res.json()
+    return data.filter(c => c.public)
+  } catch {
+    return []
+  }
+}
+
+export function getCollectionUrl(collectionUuid: string): string {
+  const uuid = collectionUuid.replace('collection_', '')
+  return `${LEARNHOUSE_PUBLIC_URL}/collection/${uuid}`
+}
+
 export function getCategoryFromTags(tags: string): string {
   const t = tags.toLowerCase()
   if (t.includes('certification')) return 'certification'

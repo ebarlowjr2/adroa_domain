@@ -7,10 +7,12 @@ import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { BookOpen, Send, ExternalLink, Plus, Library, Check, Loader2, Search } from 'lucide-react'
-import { getCourseUrl, fetchCourseList, getCategoryFromTags, estimateMinutesFromAbout } from '@/services/learnhouse'
-import type { LearnHouseCourse } from '@/services/learnhouse'
+import { BookOpen, Send, ExternalLink, Plus, Library, Check, Loader2, Search, FolderOpen, ChevronRight } from 'lucide-react'
+import { getCourseUrl, fetchCourseList, fetchCollectionList, getCategoryFromTags, estimateMinutesFromAbout } from '@/services/learnhouse'
+import type { LearnHouseCourse, LearnHouseCollection } from '@/services/learnhouse'
 import type { TrainingCatalog, Employee, TrainingAssignment } from '@/lib/types'
+
+type LibraryTab = 'collections' | 'courses'
 
 export default function Training() {
   const { organization } = useAuth()
@@ -32,10 +34,14 @@ export default function Training() {
   const [statusFilter, setStatusFilter] = useState('')
 
   // Course Library state
+  const [libraryTab, setLibraryTab] = useState<LibraryTab>('collections')
   const [libraryCourses, setLibraryCourses] = useState<LearnHouseCourse[]>([])
+  const [libraryCollections, setLibraryCollections] = useState<LearnHouseCollection[]>([])
   const [libraryLoading, setLibraryLoading] = useState(false)
   const [librarySearch, setLibrarySearch] = useState('')
   const [addingCourseId, setAddingCourseId] = useState<string | null>(null)
+  const [addingCollectionId, setAddingCollectionId] = useState<string | null>(null)
+  const [expandedCollection, setExpandedCollection] = useState<string | null>(null)
 
   const loadData = useCallback(async () => {
     if (!organization) return
@@ -61,14 +67,26 @@ export default function Training() {
 
   const openLibrary = async () => {
     setShowLibraryDialog(true)
+    setLibraryTab('collections')
     setLibraryLoading(true)
-    const courses = await fetchCourseList()
+    const [courses, collections] = await Promise.all([
+      fetchCourseList(),
+      fetchCollectionList(),
+    ])
     setLibraryCourses(courses)
+    setLibraryCollections(collections)
     setLibraryLoading(false)
   }
 
   const isCourseInCatalog = (courseUuid: string): boolean => {
     return catalog.some(c => c.learnhouse_course_id === courseUuid)
+  }
+
+  const collectionCatalogStatus = (collection: LearnHouseCollection): 'all' | 'some' | 'none' => {
+    const inCatalog = collection.courses.filter(c => isCourseInCatalog(c.course_uuid)).length
+    if (inCatalog === collection.courses.length) return 'all'
+    if (inCatalog > 0) return 'some'
+    return 'none'
   }
 
   const addCourseToCatalog = async (course: LearnHouseCourse) => {
@@ -92,10 +110,39 @@ export default function Training() {
     setAddingCourseId(null)
   }
 
+  const addCollectionToCatalog = async (collection: LearnHouseCollection) => {
+    setAddingCollectionId(collection.collection_uuid)
+    const coursesToAdd = collection.courses.filter(c => !isCourseInCatalog(c.course_uuid))
+
+    if (coursesToAdd.length > 0) {
+      const records = coursesToAdd.map(course => ({
+        title: course.name,
+        description: course.description,
+        category: getCategoryFromTags(course.tags || ''),
+        required_default: false,
+        learnhouse_course_id: course.course_uuid,
+        estimated_minutes: estimateMinutesFromAbout(course.about || ''),
+        active: true,
+      }))
+
+      const { error } = await supabase.from('training_catalog').insert(records)
+      if (!error) {
+        await loadData()
+      }
+    }
+    setAddingCollectionId(null)
+  }
+
   const filteredLibraryCourses = libraryCourses.filter(c => {
     if (!librarySearch) return true
     const q = librarySearch.toLowerCase()
     return c.name.toLowerCase().includes(q) || c.description.toLowerCase().includes(q) || (c.tags || '').toLowerCase().includes(q)
+  })
+
+  const filteredCollections = libraryCollections.filter(c => {
+    if (!librarySearch) return true
+    const q = librarySearch.toLowerCase()
+    return c.name.toLowerCase().includes(q) || c.description.toLowerCase().includes(q)
   })
 
   const handleAssign = async (e: React.FormEvent) => {
@@ -400,15 +447,41 @@ export default function Training() {
         <DialogHeader>
           <DialogTitle>Course Library</DialogTitle>
           <p className="text-sm text-white/50 mt-1">
-            Browse courses from LearnHouse and add them to your training catalog
+            Browse collections and courses from LearnHouse
           </p>
         </DialogHeader>
+
+        {/* Tabs */}
+        <div className="flex gap-1 mb-4 rounded-lg bg-white/5 p-1">
+          <button
+            onClick={() => { setLibraryTab('collections'); setLibrarySearch('') }}
+            className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+              libraryTab === 'collections'
+                ? 'bg-brand-accent/20 text-brand-accent'
+                : 'text-white/50 hover:text-white/70'
+            }`}
+          >
+            <FolderOpen size={14} className="inline mr-1.5 -mt-0.5" />
+            Collections
+          </button>
+          <button
+            onClick={() => { setLibraryTab('courses'); setLibrarySearch('') }}
+            className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+              libraryTab === 'courses'
+                ? 'bg-brand-accent/20 text-brand-accent'
+                : 'text-white/50 hover:text-white/70'
+            }`}
+          >
+            <BookOpen size={14} className="inline mr-1.5 -mt-0.5" />
+            Individual Courses
+          </button>
+        </div>
 
         <div className="relative mb-4">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/40" />
           <input
             type="text"
-            placeholder="Search courses..."
+            placeholder={libraryTab === 'collections' ? 'Search collections...' : 'Search courses...'}
             value={librarySearch}
             onChange={(e) => setLibrarySearch(e.target.value)}
             className="w-full rounded-lg border border-white/10 bg-white/5 py-2.5 pl-10 pr-4 text-sm text-white placeholder:text-white/30 focus:border-brand-accent/50 focus:outline-none"
@@ -419,69 +492,167 @@ export default function Training() {
           {libraryLoading ? (
             <div className="flex flex-col items-center justify-center py-12">
               <Loader2 size={24} className="animate-spin text-brand-accent mb-3" />
-              <p className="text-sm text-white/50">Loading courses from LearnHouse...</p>
+              <p className="text-sm text-white/50">Loading from LearnHouse...</p>
             </div>
-          ) : filteredLibraryCourses.length === 0 ? (
-            <div className="text-center py-12 text-white/40">
-              {librarySearch ? 'No courses match your search' : 'No courses available'}
-            </div>
-          ) : (
-            filteredLibraryCourses.map(course => {
-              const alreadyAdded = isCourseInCatalog(course.course_uuid)
-              const isAdding = addingCourseId === course.course_uuid
-              return (
-                <div
-                  key={course.course_uuid}
-                  className={`rounded-xl border p-4 transition-all ${
-                    alreadyAdded
-                      ? 'border-emerald-500/20 bg-emerald-500/5'
-                      : 'border-white/10 bg-white/[0.03] hover:border-brand-accent/30'
-                  }`}
-                >
-                  <div className="flex gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-white truncate">{course.name}</h3>
-                        <Badge variant="outline">{getCategoryFromTags(course.tags || '')}</Badge>
-                      </div>
-                      <p className="text-xs text-white/50 line-clamp-2">{course.description}</p>
-                      <div className="flex items-center gap-3 mt-2 text-xs text-white/40">
-                        <span>{estimateMinutesFromAbout(course.about || '')} min</span>
-                        {(course.tags || '').split(',').filter(Boolean).slice(0, 3).map(tag => (
-                          <span key={tag.trim()} className="rounded-full bg-white/5 px-2 py-0.5">{tag.trim()}</span>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="flex-shrink-0 flex items-start">
-                      {alreadyAdded ? (
-                        <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500/20 px-3 py-1.5 text-xs font-medium text-emerald-400">
-                          <Check size={14} /> In Catalog
-                        </span>
-                      ) : (
-                        <Button
-                          size="sm"
-                          onClick={() => addCourseToCatalog(course)}
-                          disabled={isAdding}
-                        >
-                          {isAdding ? (
-                            <Loader2 size={14} className="animate-spin mr-1.5" />
+          ) : libraryTab === 'collections' ? (
+            /* Collections Tab */
+            filteredCollections.length === 0 ? (
+              <div className="text-center py-12 text-white/40">
+                {librarySearch ? 'No collections match your search' : 'No collections available'}
+              </div>
+            ) : (
+              filteredCollections.map(collection => {
+                const status = collectionCatalogStatus(collection)
+                const isExpanded = expandedCollection === collection.collection_uuid
+                const isAdding = addingCollectionId === collection.collection_uuid
+                const coursesNotInCatalog = collection.courses.filter(c => !isCourseInCatalog(c.course_uuid)).length
+                return (
+                  <div key={collection.collection_uuid} className="rounded-xl border border-white/10 bg-white/[0.03] overflow-hidden">
+                    <div className="p-4">
+                      <div className="flex gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <FolderOpen size={16} className="text-brand-accent flex-shrink-0" />
+                            <h3 className="font-semibold text-white truncate">{collection.name}</h3>
+                            <Badge variant="outline">{collection.courses.length} courses</Badge>
+                          </div>
+                          <p className="text-xs text-white/50 line-clamp-2">{collection.description}</p>
+                        </div>
+                        <div className="flex-shrink-0 flex items-start gap-2">
+                          {status === 'all' ? (
+                            <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500/20 px-3 py-1.5 text-xs font-medium text-emerald-400">
+                              <Check size={14} /> All Added
+                            </span>
                           ) : (
-                            <Plus size={14} className="mr-1.5" />
+                            <Button
+                              size="sm"
+                              onClick={() => addCollectionToCatalog(collection)}
+                              disabled={isAdding}
+                            >
+                              {isAdding ? (
+                                <Loader2 size={14} className="animate-spin mr-1.5" />
+                              ) : (
+                                <Plus size={14} className="mr-1.5" />
+                              )}
+                              {isAdding ? 'Adding...' : status === 'some' ? `Add ${coursesNotInCatalog} Remaining` : 'Add All to Catalog'}
+                            </Button>
                           )}
-                          {isAdding ? 'Adding...' : 'Add to Catalog'}
-                        </Button>
-                      )}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => setExpandedCollection(isExpanded ? null : collection.collection_uuid)}
+                        className="mt-3 inline-flex items-center gap-1 text-xs text-brand-accent hover:underline"
+                      >
+                        <ChevronRight size={12} className={`transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
+                        {isExpanded ? 'Hide courses' : 'View courses'}
+                      </button>
+                    </div>
+
+                    {isExpanded && (
+                      <div className="border-t border-white/10 bg-white/[0.02] px-4 py-3 space-y-2">
+                        {collection.courses.map(course => {
+                          const inCatalog = isCourseInCatalog(course.course_uuid)
+                          const courseAdding = addingCourseId === course.course_uuid
+                          return (
+                            <div key={course.course_uuid} className="flex items-center justify-between gap-3 rounded-lg px-3 py-2 hover:bg-white/5">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <BookOpen size={12} className="text-white/40 flex-shrink-0" />
+                                  <span className="text-sm text-white truncate">{course.name}</span>
+                                  <span className="text-xs text-white/30">{estimateMinutesFromAbout(course.about || '')} min</span>
+                                </div>
+                              </div>
+                              {inCatalog ? (
+                                <span className="text-xs text-emerald-400 flex items-center gap-1">
+                                  <Check size={12} /> Added
+                                </span>
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => addCourseToCatalog(course)}
+                                  disabled={courseAdding}
+                                  className="text-xs h-7 px-2"
+                                >
+                                  {courseAdding ? <Loader2 size={12} className="animate-spin" /> : <Plus size={12} />}
+                                </Button>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )
+              })
+            )
+          ) : (
+            /* Courses Tab */
+            filteredLibraryCourses.length === 0 ? (
+              <div className="text-center py-12 text-white/40">
+                {librarySearch ? 'No courses match your search' : 'No courses available'}
+              </div>
+            ) : (
+              filteredLibraryCourses.map(course => {
+                const alreadyAdded = isCourseInCatalog(course.course_uuid)
+                const isAdding = addingCourseId === course.course_uuid
+                return (
+                  <div
+                    key={course.course_uuid}
+                    className={`rounded-xl border p-4 transition-all ${
+                      alreadyAdded
+                        ? 'border-emerald-500/20 bg-emerald-500/5'
+                        : 'border-white/10 bg-white/[0.03] hover:border-brand-accent/30'
+                    }`}
+                  >
+                    <div className="flex gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-semibold text-white truncate">{course.name}</h3>
+                          <Badge variant="outline">{getCategoryFromTags(course.tags || '')}</Badge>
+                        </div>
+                        <p className="text-xs text-white/50 line-clamp-2">{course.description}</p>
+                        <div className="flex items-center gap-3 mt-2 text-xs text-white/40">
+                          <span>{estimateMinutesFromAbout(course.about || '')} min</span>
+                          {(course.tags || '').split(',').filter(Boolean).slice(0, 3).map(tag => (
+                            <span key={tag.trim()} className="rounded-full bg-white/5 px-2 py-0.5">{tag.trim()}</span>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="flex-shrink-0 flex items-start">
+                        {alreadyAdded ? (
+                          <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500/20 px-3 py-1.5 text-xs font-medium text-emerald-400">
+                            <Check size={14} /> In Catalog
+                          </span>
+                        ) : (
+                          <Button
+                            size="sm"
+                            onClick={() => addCourseToCatalog(course)}
+                            disabled={isAdding}
+                          >
+                            {isAdding ? (
+                              <Loader2 size={14} className="animate-spin mr-1.5" />
+                            ) : (
+                              <Plus size={14} className="mr-1.5" />
+                            )}
+                            {isAdding ? 'Adding...' : 'Add to Catalog'}
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              )
-            })
+                )
+              })
+            )
           )}
         </div>
 
         <div className="flex justify-between items-center pt-4 mt-4 border-t border-white/10">
           <p className="text-xs text-white/40">
-            {filteredLibraryCourses.length} course{filteredLibraryCourses.length !== 1 ? 's' : ''} available
+            {libraryTab === 'collections'
+              ? `${filteredCollections.length} collection${filteredCollections.length !== 1 ? 's' : ''}`
+              : `${filteredLibraryCourses.length} course${filteredLibraryCourses.length !== 1 ? 's' : ''}`
+            }
           </p>
           <Button variant="outline" onClick={() => setShowLibraryDialog(false)}>
             Done
