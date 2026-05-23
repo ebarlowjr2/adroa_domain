@@ -8,14 +8,15 @@ import { Select } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { BookOpen, Send, ExternalLink, Plus, Library, Check, Loader2, Search, FolderOpen, ChevronRight } from 'lucide-react'
-import { getCourseUrl, fetchCourseList, fetchCollectionList, getCategoryFromTags, estimateMinutesFromAbout } from '@/services/learnhouse'
+import { fetchCourseList, fetchCollectionList, getCategoryFromTags, estimateMinutesFromAbout } from '@/services/learnhouse'
 import type { LearnHouseCourse, LearnHouseCollection } from '@/services/learnhouse'
+import { openWithSso } from '@/services/sso'
 import type { TrainingCatalog, Employee, TrainingAssignment } from '@/lib/types'
 
 type LibraryTab = 'collections' | 'courses'
 
 export default function Training() {
-  const { organization } = useAuth()
+  const { organization, user } = useAuth()
   const [catalog, setCatalog] = useState<TrainingCatalog[]>([])
   const [employees, setEmployees] = useState<Employee[]>([])
   const [assignments, setAssignments] = useState<(TrainingAssignment & { employee?: Employee; training?: TrainingCatalog })[]>([])
@@ -259,14 +260,18 @@ export default function Training() {
                     <span>{completedCount}/{assignedCount} completed</span>
                   </div>
                   {course.learnhouse_course_id && (
-                    <a
-                      href={getCourseUrl(course.learnhouse_course_id)}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <button
+                      onClick={() => {
+                        const uuid = course.learnhouse_course_id!.replace('course_', '')
+                        const email = user?.email || ''
+                        const firstName = (user?.user_metadata?.first_name as string) || ''
+                        const lastName = (user?.user_metadata?.last_name as string) || ''
+                        openWithSso(email, firstName, lastName, `/course/${uuid}`)
+                      }}
                       className="mt-2 inline-flex items-center gap-1 text-xs text-brand-accent hover:underline"
                     >
                       View in LearnHouse <ExternalLink size={10} />
-                    </a>
+                    </button>
                   )}
                 </div>
               )
