@@ -4,13 +4,14 @@ import {
   Shield,
   BookOpen,
   Users,
-  Zap,
-  Target,
-  Brain,
-  Building,
-  GraduationCap,
+  Building2,
+  User,
   ChevronRight,
   ArrowRight,
+  CheckCircle,
+  BarChart3,
+  UserPlus,
+  GraduationCap,
 } from 'lucide-react'
 
 export default function Landing() {
@@ -36,114 +37,129 @@ export default function Landing() {
           >
             Dashboard Login
           </Link>
-          <Link
-            to="/get-started"
-            className="rounded-xl bg-brand-accent/90 px-4 py-2 text-sm font-medium text-black hover:bg-brand-accent"
-          >
-            Get Started
-          </Link>
         </nav>
       </header>
 
       <main>
         {/* Hero */}
-        <section className="container mx-auto px-6 pt-16 pb-20 text-center">
+        <section className="container mx-auto px-6 pt-16 pb-12 text-center">
           <span className="mb-4 inline-flex items-center gap-2 rounded-full border border-brand-neutral-600 bg-brand-neutral-700/30 px-3 py-1 text-xs text-brand-neutral-100">
-            Next-Generation Cybersecurity Training
+            Cybersecurity Training by One Circle Solutions
           </span>
           <h1 className="mx-auto mt-4 max-w-4xl text-4xl font-extrabold leading-tight text-white md:text-6xl">
-            Modern Cybersecurity Training{' '}
-            <span className="text-brand-accent">Built for the Real World</span>
+            Build Real Cybersecurity{' '}
+            <span className="text-brand-accent">Readiness</span>
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg text-white/70">
-            The Adroa Domain by One Circle Solutions combines guided learning with hands-on
-            operational training in a modern interactive environment designed for today's workforce.
+            The Adroa Domain is a modern training platform that combines guided learning
+            with hands-on exercises. Whether you're protecting a team or growing your own
+            skills, start here.
           </p>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+        </section>
+
+        {/* Choose Your Path — integrated directly */}
+        <section className="container mx-auto px-6 py-12" id="paths">
+          <h2 className="mb-2 text-center text-2xl font-bold text-white md:text-3xl">
+            Choose Your Path
+          </h2>
+          <p className="mx-auto mb-10 max-w-xl text-center text-white/50">
+            Select the option that best fits how you want to use the platform.
+          </p>
+
+          <div className="mx-auto grid max-w-5xl gap-8 md:grid-cols-2">
+            {/* Organization Card */}
             <Link
-              to="/get-started"
-              className="inline-flex items-center gap-2 rounded-xl bg-brand-accent px-6 py-3 font-medium text-black shadow-lg shadow-brand-accent/25 transition-colors hover:bg-brand-accent-light"
+              to="/org/signup"
+              className="group relative rounded-2xl border border-white/10 bg-brand-card p-8 transition-all hover:border-brand-accent/40 hover:shadow-lg hover:shadow-brand-accent/5"
             >
-              Start Learning <ArrowRight size={18} />
+              <div className="mb-5 inline-flex rounded-xl bg-brand-accent/10 p-4 text-brand-accent transition-colors group-hover:bg-brand-accent/20">
+                <Building2 size={28} />
+              </div>
+              <h3 className="text-2xl font-bold text-white">Sign Up Your Company</h3>
+              <p className="mt-3 text-sm leading-relaxed text-white/60">
+                Create a business account to manage cybersecurity training for your
+                entire team. Assign courses, track completion, and build organization-wide
+                security readiness from one dashboard.
+              </p>
+              <ul className="mt-5 space-y-2 text-sm text-white/50">
+                <li className="flex items-center gap-2">
+                  <CheckCircle size={14} className="text-brand-accent" />
+                  Employee management & training assignment
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle size={14} className="text-brand-accent" />
+                  Completion tracking & compliance reporting
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle size={14} className="text-brand-accent" />
+                  Free tier: up to 5 users
+                </li>
+              </ul>
+              <div className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-brand-accent transition-all group-hover:gap-3">
+                Create Organization Account <ArrowRight size={16} />
+              </div>
             </Link>
+
+            {/* Individual Card */}
             <a
-              href="https://learn.adroadomain.com/courses"
-              className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-6 py-3 text-white transition-colors hover:bg-white/10"
+              href="https://learn.adroadomain.com"
+              className="group relative rounded-2xl border border-white/10 bg-brand-card p-8 transition-all hover:border-brand-accent/40 hover:shadow-lg hover:shadow-brand-accent/5"
             >
-              Explore Training Paths <ChevronRight size={18} />
+              <div className="mb-5 inline-flex rounded-xl bg-brand-accent/10 p-4 text-brand-accent transition-colors group-hover:bg-brand-accent/20">
+                <User size={28} />
+              </div>
+              <h3 className="text-2xl font-bold text-white">Start Learning Individually</h3>
+              <p className="mt-3 text-sm leading-relaxed text-white/60">
+                Jump straight into cybersecurity training at your own pace. Access
+                courses on phishing awareness, AI safety, digital hygiene, and more — no
+                organization account needed.
+              </p>
+              <ul className="mt-5 space-y-2 text-sm text-white/50">
+                <li className="flex items-center gap-2">
+                  <CheckCircle size={14} className="text-brand-accent" />
+                  Self-paced interactive courses
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle size={14} className="text-brand-accent" />
+                  Quizzes, scenarios & real-world examples
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle size={14} className="text-brand-accent" />
+                  Free to start — no credit card required
+                </li>
+              </ul>
+              <div className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-brand-accent transition-all group-hover:gap-3">
+                Browse Courses <ArrowRight size={16} />
+              </div>
             </a>
           </div>
+
+          <p className="mt-8 text-center text-sm text-white/40">
+            Already have an account?{' '}
+            <Link to="/org/login" className="text-brand-accent hover:underline">
+              Sign in to your dashboard
+            </Link>
+            {' '}or{' '}
+            <a href="https://learn.adroadomain.com" className="text-brand-accent hover:underline">
+              go to the training portal
+            </a>
+          </p>
         </section>
 
-        {/* Platform Description */}
+        {/* What You Get — brief value props */}
         <section className="container mx-auto px-6 py-16">
-          <div className="mx-auto max-w-3xl text-center">
-            <h2 className="text-2xl font-bold text-white md:text-3xl">
-              A Next-Generation Cybersecurity Training Platform
-            </h2>
-            <p className="mt-4 text-white/60">
-              The Adroa Domain was designed to move beyond standard awareness slides and checkbox quizzes.
-              It teaches real cybersecurity concepts through guided training modules, interactive exercises,
-              and practical workplace scenarios that help learners recognize, respond to, and prevent
-              real-world threats.
-            </p>
-          </div>
-        </section>
-
-        {/* Two-Part Learning */}
-        <section className="container mx-auto px-6 py-16">
-          <div className="grid gap-8 md:grid-cols-2">
-            <div className="rounded-2xl border border-white/10 bg-brand-card p-8">
-              <div className="mb-4 inline-flex rounded-xl bg-brand-accent/10 p-3 text-brand-accent">
-                <BookOpen size={24} />
-              </div>
-              <h3 className="text-xl font-semibold text-white">Learn the Concepts</h3>
-              <p className="mt-2 text-sm text-white/60">
-                Start with modern guided training modules designed for:
-              </p>
-              <ul className="mt-4 space-y-2 text-sm text-white/70">
-                <li className="flex items-center gap-2"><ChevronRight size={14} className="text-brand-accent" /> Phishing & social engineering awareness</li>
-                <li className="flex items-center gap-2"><ChevronRight size={14} className="text-brand-accent" /> Password, MFA & identity protection</li>
-                <li className="flex items-center gap-2"><ChevronRight size={14} className="text-brand-accent" /> AI safety & responsible usage</li>
-                <li className="flex items-center gap-2"><ChevronRight size={14} className="text-brand-accent" /> Safe browsing & internet behavior</li>
-                <li className="flex items-center gap-2"><ChevronRight size={14} className="text-brand-accent" /> Incident recognition & reporting</li>
-              </ul>
-              <p className="mt-4 text-xs text-white/40">
-                Lessons include scenario-based exercises, decision points, quizzes, and real-world examples.
-              </p>
-            </div>
-
-            <div className="rounded-2xl border border-white/10 bg-brand-card p-8">
-              <div className="mb-4 inline-flex rounded-xl bg-brand-accent/10 p-3 text-brand-accent">
-                <Zap size={24} />
-              </div>
-              <h3 className="text-xl font-semibold text-white">Apply the Skills</h3>
-              <p className="mt-2 text-sm text-white/60">
-                Practice security concepts in realistic environments through:
-              </p>
-              <ul className="mt-4 space-y-2 text-sm text-white/70">
-                <li className="flex items-center gap-2"><ChevronRight size={14} className="text-brand-accent" /> Simulated phishing exercises</li>
-                <li className="flex items-center gap-2"><ChevronRight size={14} className="text-brand-accent" /> Security decision scenarios</li>
-                <li className="flex items-center gap-2"><ChevronRight size={14} className="text-brand-accent" /> Incident response walkthroughs</li>
-                <li className="flex items-center gap-2"><ChevronRight size={14} className="text-brand-accent" /> Real-world breach case studies</li>
-                <li className="flex items-center gap-2"><ChevronRight size={14} className="text-brand-accent" /> Interactive security assessments</li>
-              </ul>
-              <p className="mt-4 text-xs text-white/40">
-                This creates a more engaging and effective learning experience for every role.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        {/* Why Different */}
-        <section className="container mx-auto px-6 py-16">
-          <h2 className="mb-8 text-center text-2xl font-bold text-white">Why This Is Different</h2>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <h2 className="mb-2 text-center text-2xl font-bold text-white md:text-3xl">
+            What Makes Adroa Domain Different
+          </h2>
+          <p className="mx-auto mb-10 max-w-xl text-center text-white/50">
+            Go beyond checkbox compliance with training built for real-world threats.
+          </p>
+          <div className="mx-auto grid max-w-5xl gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {[
-              { icon: Brain, title: 'Judgment-Based', desc: 'Teaches critical thinking and behavioral security, not just checkbox compliance.' },
-              { icon: Target, title: 'Threat-Aware', desc: 'Covers modern risks including AI threats, deepfakes, OSINT, and social engineering.' },
-              { icon: Shield, title: 'Operationally Focused', desc: 'Designed around real-world workplace scenarios and practical decision-making.' },
-              { icon: Users, title: 'Team-Ready', desc: 'Built for organizations to assign, track, and certify employee training at scale.' },
+              { icon: BookOpen, title: 'Guided Learning', desc: 'Structured courses covering phishing, AI safety, passwords, social engineering, and more.' },
+              { icon: Shield, title: 'Hands-On Exercises', desc: 'Scenario-based training with real-world breach examples and decision-point exercises.' },
+              { icon: BarChart3, title: 'Track Progress', desc: 'Organizations can assign training, monitor completion, and generate readiness reports.' },
+              { icon: GraduationCap, title: 'Earn Certification', desc: 'Complete the Modern Cyber Awareness course to earn your digital safety certification.' },
             ].map((item) => (
               <div key={item.title} className="rounded-2xl border border-white/10 bg-brand-card p-6 text-center transition-all hover:border-brand-accent/30">
                 <div className="mx-auto mb-3 inline-flex rounded-xl bg-brand-accent/10 p-3 text-brand-accent">
@@ -156,72 +172,52 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* Who It's For */}
+        {/* Who It's For — compact */}
         <section className="container mx-auto px-6 py-16">
           <h2 className="mb-8 text-center text-2xl font-bold text-white">Who It's Built For</h2>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-center gap-4">
             {[
-              { icon: Building, title: 'Small Businesses', desc: 'Affordable training to protect your team without a dedicated security department.' },
-              { icon: Users, title: 'HR & Compliance Teams', desc: 'Assign training, track completions, and generate compliance-ready reports.' },
-              { icon: GraduationCap, title: 'Individual Learners', desc: 'Build practical cybersecurity skills for your career and personal safety.' },
-              { icon: Shield, title: 'Security Teams', desc: 'Supplement technical controls with operational cybersecurity training for staff.' },
+              { icon: Building2, label: 'Small Businesses' },
+              { icon: Users, label: 'HR & Compliance Teams' },
+              { icon: User, label: 'Individual Learners' },
+              { icon: Shield, label: 'Security Teams' },
+              { icon: UserPlus, label: 'MSPs & IT Providers' },
+              { icon: GraduationCap, label: 'New IT Professionals' },
             ].map((item) => (
-              <div key={item.title} className="rounded-2xl border border-white/10 bg-brand-card p-6 text-center transition-all hover:border-brand-accent/30">
-                <div className="mx-auto mb-3 inline-flex rounded-xl bg-brand-accent/10 p-3 text-brand-accent">
-                  <item.icon size={22} />
-                </div>
-                <h3 className="font-semibold text-white">{item.title}</h3>
-                <p className="mt-2 text-sm text-white/50">{item.desc}</p>
+              <div
+                key={item.label}
+                className="flex items-center gap-2 rounded-full border border-white/10 bg-brand-card px-5 py-2.5"
+              >
+                <item.icon size={16} className="text-brand-accent" />
+                <span className="text-sm text-white/70">{item.label}</span>
               </div>
             ))}
           </div>
         </section>
 
-        {/* CTA */}
+        {/* Bottom CTA */}
         <section className="container mx-auto px-6 py-16">
           <div className="rounded-2xl border border-brand-accent/30 bg-gradient-to-r from-brand-accent/10 to-transparent p-8 text-center md:p-12">
             <h2 className="text-2xl font-bold text-white md:text-3xl">
-              Experience a modern approach to cybersecurity training
+              Ready to get started?
             </h2>
             <p className="mx-auto mt-4 max-w-xl text-white/60">
-              Start building security awareness across your organization with interactive courses,
-              hands-on operational labs, guided security exercises, and role-based learning paths.
+              Choose the path that fits your needs and start building real cybersecurity readiness today.
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
               <Link
-                to="/get-started"
+                to="/org/signup"
                 className="inline-flex items-center gap-2 rounded-xl bg-brand-accent px-6 py-3 font-medium text-black shadow-lg shadow-brand-accent/25 transition-colors hover:bg-brand-accent-light"
               >
-                Get Started Free <ArrowRight size={18} />
+                Sign Up Your Company <ArrowRight size={18} />
               </Link>
               <a
                 href="https://learn.adroadomain.com/courses"
                 className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-6 py-3 text-white transition-colors hover:bg-white/10"
               >
-                Browse Courses
+                Start Learning Free <ChevronRight size={18} />
               </a>
             </div>
-          </div>
-        </section>
-
-        {/* Coming Soon */}
-        <section className="container mx-auto px-6 py-16">
-          <h2 className="mb-6 text-center text-lg font-semibold text-white/70">Coming Soon</h2>
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            {[
-              'Interactive Training Modules',
-              'Awareness Courses',
-              'Hands-On Operational Labs',
-              'Guided Security Exercises',
-              'Role-Based Learning Paths',
-            ].map((item) => (
-              <span
-                key={item}
-                className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/60"
-              >
-                {item}
-              </span>
-            ))}
           </div>
         </section>
       </main>
