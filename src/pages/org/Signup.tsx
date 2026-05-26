@@ -30,29 +30,40 @@ export default function Signup() {
     setError('')
     setLoading(true)
 
-    const result = await signUp(
-      form.email,
-      form.password,
-      form.orgName,
-      form.firstName,
-      form.lastName,
-      form.companySize,
-      form.plan
-    )
+    try {
+      const timeoutPromise = new Promise<{ error: string; needsConfirmation?: boolean }>((resolve) =>
+        setTimeout(() => resolve({ error: 'Signup timed out. Please check your connection and try again.' }), 15000)
+      )
+      const result = await Promise.race([
+        signUp(
+          form.email,
+          form.password,
+          form.orgName,
+          form.firstName,
+          form.lastName,
+          form.companySize,
+          form.plan
+        ),
+        timeoutPromise,
+      ])
 
-    if (result.error) {
-      setError(result.error)
+      if (result.error) {
+        setError(result.error)
+        setLoading(false)
+        return
+      }
+
+      if (result.needsConfirmation) {
+        setConfirmationSent(true)
+        setLoading(false)
+        return
+      }
+
+      navigate('/dashboard')
+    } catch {
+      setError('An unexpected error occurred. Please try again.')
       setLoading(false)
-      return
     }
-
-    if (result.needsConfirmation) {
-      setConfirmationSent(true)
-      setLoading(false)
-      return
-    }
-
-    navigate('/dashboard')
   }
 
   if (confirmationSent) {

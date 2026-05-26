@@ -63,27 +63,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   })
 
   const loadOrgData = useCallback(async (userId: string) => {
-    const { data: member } = await supabase
-      .from('organization_members')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('status', 'active')
-      .single()
-
-    if (member) {
-      const { data: org } = await supabase
-        .from('organizations')
+    try {
+      const { data: member } = await supabase
+        .from('organization_members')
         .select('*')
-        .eq('id', member.org_id)
+        .eq('user_id', userId)
+        .eq('status', 'active')
         .single()
 
-      setState(prev => ({
-        ...prev,
-        organization: org as Organization | null,
-        membership: member as OrganizationMember,
-        loading: false,
-      }))
-    } else {
+      if (member) {
+        const { data: org } = await supabase
+          .from('organizations')
+          .select('*')
+          .eq('id', member.org_id)
+          .single()
+
+        setState(prev => ({
+          ...prev,
+          organization: org as Organization | null,
+          membership: member as OrganizationMember,
+          loading: false,
+        }))
+      } else {
+        setState(prev => ({ ...prev, loading: false }))
+      }
+    } catch {
       setState(prev => ({ ...prev, loading: false }))
     }
   }, [])
@@ -101,27 +105,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setState(prev => ({ ...prev, user: session?.user ?? null, session }))
       if (session?.user) {
-        // When user confirms email and signs in for the first time,
-        // check if they need an org created from their signup metadata
-        if (event === 'SIGNED_IN') {
-          const { data: existingMember } = await supabase
-            .from('organization_members')
-            .select('id')
-            .eq('user_id', session.user.id)
-            .single()
+        try {
+          if (event === 'SIGNED_IN') {
+            const { data: existingMember } = await supabase
+              .from('organization_members')
+              .select('id')
+              .eq('user_id', session.user.id)
+              .single()
 
-          if (!existingMember) {
-            const meta = session.user.user_metadata
-            if (meta?.org_name) {
-              await createOrganization(
-                session.user.id,
-                meta.org_name as string,
-                (meta.plan as string) || 'free'
-              )
+            if (!existingMember) {
+              const meta = session.user.user_metadata
+              if (meta?.org_name) {
+                await createOrganization(
+                  session.user.id,
+                  meta.org_name as string,
+                  (meta.plan as string) || 'free'
+                )
+              }
             }
           }
+          loadOrgData(session.user.id)
+        } catch {
+          setState(prev => ({ ...prev, loading: false }))
         }
-        loadOrgData(session.user.id)
       } else {
         setState(prev => ({
           ...prev,
@@ -144,21 +150,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     _companySize: string,
     plan: string
   ) => {
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          first_name: firstName,
-          last_name: lastName,
-          org_name: orgName,
-          plan,
+    let authData, authError
+    try {
+      const result = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            first_name: firstName,
+            last_name: lastName,
+            org_name: orgName,
+            plan,
+          },
         },
-      },
-    })
+      })
+      authData = result.data
+      authError = result.error
+    } catch (err) {
+      return { error: err instanceof Error ? err.message : 'Signup failed. Please try again.' }
+    }
 
     if (authError) return { error: authError.message }
-    if (!authData.user) return { error: 'Signup failed' }
+    if (!authData?.user) return { error: 'Signup failed. Please try again.' }
 
     // Check if the user's email is confirmed (auto-confirm may be off)
     const session = authData.session
@@ -176,9 +189,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) return { error: error.message }
-    return { error: null }
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) return { error: error.message }
+      return { error: null }
+    } catch (err) {
+      return { error: err instanceof Error ? err.message : 'Sign in failed. Please try again.' }
+    }
   }
 
   const signOut = async () => {
