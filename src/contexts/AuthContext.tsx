@@ -152,6 +152,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   ) => {
     let authData, authError
     try {
+      const siteUrl = window.location.origin
       const result = await supabase.auth.signUp({
         email,
         password,
@@ -162,6 +163,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             org_name: orgName,
             plan,
           },
+          emailRedirectTo: `${siteUrl}/org/confirm`,
         },
       })
       authData = result.data

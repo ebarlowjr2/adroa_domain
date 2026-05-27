@@ -14,6 +14,7 @@ import JWTLab from "./pages/JWTLab";
 import GetStarted from "./pages/GetStarted";
 import Signup from "./pages/org/Signup";
 import Login from "./pages/org/Login";
+import OrgConfirm from "./pages/org/OrgConfirm";
 import Dashboard from "./pages/dashboard/Dashboard";
 import Employees from "./pages/dashboard/Employees";
 import Training from "./pages/dashboard/Training";
@@ -76,6 +77,7 @@ export default function App() {
       {/* Auth */}
       <Route path="/org/signup" element={<Signup />} />
       <Route path="/org/login" element={<Login />} />
+      <Route path="/org/confirm" element={<OrgConfirm />} />
 
       {/* Dashboard (protected) */}
       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
@@ -88,6 +90,7 @@ export default function App() {
 
       {/* Auth callback — Supabase redirects here after email confirmation */}
       <Route path="/auth/confirm" element={<VcmConfirm />} />
+      <Route path="/confirm" element={<VcmConfirm />} />
     </Routes>
   );
 }

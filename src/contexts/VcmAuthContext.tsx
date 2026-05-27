@@ -83,10 +83,14 @@ export function VcmAuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
     try {
+      const siteUrl = window.location.origin
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: { data: { first_name: firstName, last_name: lastName, app: 'vcm' } },
+        options: {
+          data: { first_name: firstName, last_name: lastName, app: 'vcm' },
+          emailRedirectTo: `${siteUrl}/vcm/confirm`,
+        },
       })
       if (error) return { error: error.message }
       if (!data.user) return { error: 'Signup failed.' }
