@@ -17,23 +17,28 @@ import {
 
 interface DashboardData {
   certifications: UserCertification[]
-  activities: TrainingActivity[]
+  allActivities: TrainingActivity[]
+  recentActivities: TrainingActivity[]
 }
 
 export default function VcmDashboard() {
   const { user } = useVcmAuth()
-  const [data, setData] = useState<DashboardData>({ certifications: [], activities: [] })
+  const [data, setData] = useState<DashboardData>({ certifications: [], allActivities: [], recentActivities: [] })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (!user) return
     async function load() {
-      const [certsRes, activitiesRes] = await Promise.all([
+      const [certsRes, allActivitiesRes, recentActivitiesRes] = await Promise.all([
         supabase
           .from('user_certifications')
           .select('*')
           .eq('user_id', user!.id)
           .order('expiration_date', { ascending: true }),
+        supabase
+          .from('training_activities')
+          .select('*')
+          .eq('user_id', user!.id),
         supabase
           .from('training_activities')
           .select('*')
@@ -43,7 +48,8 @@ export default function VcmDashboard() {
       ])
       setData({
         certifications: (certsRes.data || []) as UserCertification[],
-        activities: (activitiesRes.data || []) as TrainingActivity[],
+        allActivities: (allActivitiesRes.data || []) as TrainingActivity[],
+        recentActivities: (recentActivitiesRes.data || []) as TrainingActivity[],
       })
       setLoading(false)
     }
@@ -64,7 +70,7 @@ export default function VcmDashboard() {
   })
 
   const currentYear = now.getFullYear()
-  const thisYearActivities = data.activities.filter(a =>
+  const thisYearActivities = data.allActivities.filter(a =>
     new Date(a.completion_date).getFullYear() === currentYear
   )
   const totalUnitsEarned = thisYearActivities.reduce((sum, a) => sum + Number(a.units_earned), 0)
@@ -186,7 +192,7 @@ export default function VcmDashboard() {
               View all <ChevronRight size={12} className="inline" />
             </Link>
           </div>
-          {data.activities.length === 0 ? (
+          {data.recentActivities.length === 0 ? (
             <div className="py-8 text-center">
               <BookOpen size={32} className="mx-auto mb-3 text-white/20" />
               <p className="text-sm text-white/40">No training activities logged yet</p>
@@ -200,7 +206,7 @@ export default function VcmDashboard() {
             </div>
           ) : (
             <div className="space-y-3">
-              {data.activities.map(activity => (
+              {data.recentActivities.map(activity => (
                 <div key={activity.id} className="flex items-center justify-between rounded-xl border border-white/5 bg-white/5 px-4 py-3">
                   <div>
                     <p className="text-sm font-medium text-white">{activity.title}</p>
@@ -231,7 +237,7 @@ export default function VcmDashboard() {
               Add your first certification
             </Link>
           )}
-          {data.activities.length === 0 && (
+          {data.allActivities.length === 0 && (
             <Link
               to="/vcm/training-log"
               className="flex items-center gap-3 rounded-xl border border-brand-accent/20 bg-brand-accent/5 px-4 py-3 text-sm text-white hover:bg-brand-accent/10"

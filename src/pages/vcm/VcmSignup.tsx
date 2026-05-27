@@ -12,6 +12,7 @@ export default function VcmSignup() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [confirmation, setConfirmation] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -21,10 +22,13 @@ export default function VcmSignup() {
       return
     }
     setLoading(true)
-    const { error: err } = await signUp(email, password, firstName, lastName)
+    const result = await signUp(email, password, firstName, lastName)
     setLoading(false)
-    if (err) {
-      setError(err)
+    if (result.error) {
+      setError(result.error)
+    } else if (result.needsConfirmation) {
+      setError('')
+      setConfirmation(true)
     } else {
       navigate('/vcm/dashboard')
     }
@@ -44,6 +48,22 @@ export default function VcmSignup() {
         </div>
 
         <div className="rounded-2xl border border-white/10 bg-brand-card p-8">
+          {confirmation ? (
+            <div className="text-center">
+              <h2 className="mb-3 text-xl font-semibold text-white">Check Your Email</h2>
+              <p className="text-sm text-white/60">
+                We sent a confirmation link to <span className="text-brand-accent">{email}</span>.
+                Click the link to activate your account, then sign in.
+              </p>
+              <Link
+                to="/vcm/login"
+                className="mt-6 inline-flex rounded-xl bg-brand-accent px-6 py-2.5 text-sm font-medium text-white hover:bg-brand-accent-light"
+              >
+                Go to Sign In
+              </Link>
+            </div>
+          ) : (
+          <>
           <h2 className="mb-6 text-xl font-semibold text-white">Create Account</h2>
 
           {error && (
@@ -114,6 +134,8 @@ export default function VcmSignup() {
               Sign in
             </Link>
           </p>
+          </>
+          )}
         </div>
 
         <p className="mt-6 text-center text-xs text-white/30">

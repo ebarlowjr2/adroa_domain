@@ -12,7 +12,7 @@ interface VcmAuthState {
 }
 
 interface VcmAuthContextType extends VcmAuthState {
-  signUp: (email: string, password: string, firstName: string, lastName: string) => Promise<{ error: string | null }>
+  signUp: (email: string, password: string, firstName: string, lastName: string) => Promise<{ error: string | null; needsConfirmation?: boolean }>
   signIn: (email: string, password: string) => Promise<{ error: string | null }>
   signOut: () => Promise<void>
   refreshProfile: () => Promise<void>
@@ -39,10 +39,17 @@ export function VcmAuthProvider({ children }: { children: ReactNode }) {
       if (profile) {
         setState(prev => ({ ...prev, profile: profile as VcmUserProfile, loading: false }))
       } else {
-        // Auto-create profile on first load
+        // Auto-create profile on first load; pull name from user_metadata
+        const { data: { user: currentUser } } = await supabase.auth.getUser()
+        const meta = currentUser?.user_metadata
         const { data: newProfile } = await supabase
           .from('vcm_user_profiles')
-          .insert({ user_id: userId, email: email || '' })
+          .insert({
+            user_id: userId,
+            email: email || '',
+            first_name: (meta?.first_name as string) || '',
+            last_name: (meta?.last_name as string) || '',
+          })
           .select()
           .single()
         setState(prev => ({ ...prev, profile: newProfile as VcmUserProfile | null, loading: false }))
@@ -84,13 +91,20 @@ export function VcmAuthProvider({ children }: { children: ReactNode }) {
       if (error) return { error: error.message }
       if (!data.user) return { error: 'Signup failed.' }
 
-      // Create VCM profile
-      await supabase.from('vcm_user_profiles').insert({
+      // If no session, email confirmation is required — name is stored in user_metadata
+      // and will be pulled into the profile when loadProfile runs after confirmation
+      if (!data.session) {
+        return { error: null, needsConfirmation: true }
+      }
+
+      // Session exists — create VCM profile immediately
+      const { error: profileErr } = await supabase.from('vcm_user_profiles').insert({
         user_id: data.user.id,
         first_name: firstName,
         last_name: lastName,
         email,
       })
+      if (profileErr) return { error: profileErr.message }
       return { error: null }
     } catch (err) {
       return { error: err instanceof Error ? err.message : 'Signup failed.' }
