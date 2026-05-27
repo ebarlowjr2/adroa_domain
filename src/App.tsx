@@ -32,6 +32,7 @@ import VcmNewCertification from "./pages/vcm/VcmNewCertification";
 import VcmTrainingLog from "./pages/vcm/VcmTrainingLog";
 import VcmOpportunities from "./pages/vcm/VcmOpportunities";
 import VcmProfile from "./pages/vcm/VcmProfile";
+import VcmConfirm from "./pages/vcm/VcmConfirm";
 
 function VcmRoutes() {
   return (
@@ -40,6 +41,7 @@ function VcmRoutes() {
         <Route path="/" element={<VcmLanding />} />
         <Route path="/login" element={<VcmLogin />} />
         <Route path="/signup" element={<VcmSignup />} />
+        <Route path="/confirm" element={<VcmConfirm />} />
         <Route path="/dashboard" element={<VcmProtectedRoute><VcmDashboard /></VcmProtectedRoute>} />
         <Route path="/certifications" element={<VcmProtectedRoute><VcmCertifications /></VcmProtectedRoute>} />
         <Route path="/certifications/new" element={<VcmProtectedRoute><VcmNewCertification /></VcmProtectedRoute>} />
@@ -83,6 +85,9 @@ export default function App() {
 
       {/* VCM — Virtual Certification Manager */}
       <Route path="/vcm/*" element={<VcmRoutes />} />
+
+      {/* Auth callback — Supabase redirects here after email confirmation */}
+      <Route path="/auth/confirm" element={<VcmConfirm />} />
     </Routes>
   );
 }
