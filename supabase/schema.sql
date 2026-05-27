@@ -80,6 +80,15 @@ CREATE TABLE IF NOT EXISTS readiness_events (
   created_at timestamptz DEFAULT now()
 );
 
+-- Organization mandatory training (company-wide required courses)
+CREATE TABLE IF NOT EXISTS org_mandatory_training (
+  id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+  org_id uuid NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  training_id uuid NOT NULL REFERENCES training_catalog(id) ON DELETE CASCADE,
+  created_at timestamptz DEFAULT now(),
+  UNIQUE(org_id, training_id)
+);
+
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_org_members_user ON organization_members(user_id);
 CREATE INDEX IF NOT EXISTS idx_org_members_org ON organization_members(org_id);
@@ -95,6 +104,7 @@ ALTER TABLE employees ENABLE ROW LEVEL SECURITY;
 ALTER TABLE training_catalog ENABLE ROW LEVEL SECURITY;
 ALTER TABLE training_assignments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE readiness_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE org_mandatory_training ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies
 
@@ -178,6 +188,35 @@ CREATE POLICY "Org admins can update assignments" ON training_assignments
 -- Readiness events: org members can view
 CREATE POLICY "Org members can view readiness events" ON readiness_events
   FOR SELECT USING (
+    org_id IN (SELECT get_user_org_ids(auth.uid()))
+  );
+
+-- Employees: org admins can delete employees
+CREATE POLICY "Org admins can delete employees" ON employees
+  FOR DELETE USING (
+    org_id IN (SELECT get_user_org_ids(auth.uid()))
+  );
+
+-- Training assignments: org admins can delete assignments
+CREATE POLICY "Org admins can delete assignments" ON training_assignments
+  FOR DELETE USING (
+    org_id IN (SELECT get_user_org_ids(auth.uid()))
+  );
+
+-- Mandatory training: org members can view
+CREATE POLICY "Org members can view mandatory training" ON org_mandatory_training
+  FOR SELECT USING (
+    org_id IN (SELECT get_user_org_ids(auth.uid()))
+  );
+
+-- Mandatory training: org admins can manage
+CREATE POLICY "Org admins can insert mandatory training" ON org_mandatory_training
+  FOR INSERT WITH CHECK (
+    org_id IN (SELECT get_user_org_ids(auth.uid()))
+  );
+
+CREATE POLICY "Org admins can delete mandatory training" ON org_mandatory_training
+  FOR DELETE USING (
     org_id IN (SELECT get_user_org_ids(auth.uid()))
   );
 

@@ -18,6 +18,7 @@ import Dashboard from "./pages/dashboard/Dashboard";
 import Employees from "./pages/dashboard/Employees";
 import Training from "./pages/dashboard/Training";
 import Readiness from "./pages/dashboard/Readiness";
+import TrainingReport from "./pages/dashboard/TrainingReport";
 import { ProtectedRoute } from "./components/dashboard/ProtectedRoute";
 
 export default function App() {
@@ -48,6 +49,7 @@ export default function App() {
       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/dashboard/employees" element={<ProtectedRoute><Employees /></ProtectedRoute>} />
       <Route path="/dashboard/training" element={<ProtectedRoute><Training /></ProtectedRoute>} />
+      <Route path="/dashboard/training-report" element={<ProtectedRoute><TrainingReport /></ProtectedRoute>} />
       <Route path="/dashboard/readiness" element={<ProtectedRoute><Readiness /></ProtectedRoute>} />
     </Routes>
   );

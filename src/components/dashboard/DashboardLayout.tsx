@@ -1,10 +1,12 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
+import { useIsAdmin } from '@/hooks/useIsAdmin'
 import {
   LayoutDashboard,
   Users,
   BookOpen,
   Shield,
+  ClipboardList,
   LogOut,
   Menu,
   X,
@@ -12,18 +14,29 @@ import {
 import { useState } from 'react'
 import type { ReactNode } from 'react'
 
-const navItems = [
+interface NavItem {
+  label: string
+  href: string
+  icon: typeof LayoutDashboard
+  adminOnly?: boolean
+}
+
+const navItems: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Employees', href: '/dashboard/employees', icon: Users },
+  { label: 'Employees', href: '/dashboard/employees', icon: Users, adminOnly: true },
   { label: 'Training', href: '/dashboard/training', icon: BookOpen },
+  { label: 'Training Report', href: '/dashboard/training-report', icon: ClipboardList, adminOnly: true },
   { label: 'Readiness', href: '/dashboard/readiness', icon: Shield },
 ]
 
 export function DashboardLayout({ children }: { children: ReactNode }) {
-  const { organization, user, signOut } = useAuth()
+  const { organization, user, membership, signOut } = useAuth()
+  const isAdmin = useIsAdmin()
   const location = useLocation()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
+
+  const visibleNavItems = navItems.filter(item => !item.adminOnly || isAdmin)
 
   const handleSignOut = async () => {
     await signOut()
@@ -60,7 +73,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
             </div>
 
             <nav className="flex-1 space-y-1 p-3">
-              {navItems.map((item) => {
+              {visibleNavItems.map((item) => {
                 const isActive = location.pathname === item.href
                 return (
                   <Link
@@ -83,6 +96,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
             <div className="border-t border-white/10 p-3">
               <div className="mb-2 px-3 py-1">
                 <p className="truncate text-sm text-white/70">{user?.email}</p>
+                <p className="truncate text-xs text-white/40 capitalize">{membership?.role || 'member'}</p>
               </div>
               <button
                 onClick={handleSignOut}
