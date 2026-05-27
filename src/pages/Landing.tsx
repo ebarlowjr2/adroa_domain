@@ -25,6 +25,12 @@ export default function Landing() {
           Adroa Domain
         </Link>
         <nav className="flex items-center gap-3">
+          <Link
+            to="/vcm"
+            className="hidden rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white hover:bg-white/10 sm:inline-flex"
+          >
+            Certification Manager
+          </Link>
           <a
             href="https://learn.adroadomain.com"
             className="hidden rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white hover:bg-white/10 sm:inline-flex"

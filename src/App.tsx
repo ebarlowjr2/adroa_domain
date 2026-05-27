@@ -20,6 +20,37 @@ import Training from "./pages/dashboard/Training";
 import Readiness from "./pages/dashboard/Readiness";
 import { ProtectedRoute } from "./components/dashboard/ProtectedRoute";
 
+/* VCM — Virtual Certification Manager */
+import { VcmAuthProvider } from "./contexts/VcmAuthContext";
+import { VcmProtectedRoute } from "./components/vcm/VcmProtectedRoute";
+import VcmLanding from "./pages/vcm/VcmLanding";
+import VcmLogin from "./pages/vcm/VcmLogin";
+import VcmSignup from "./pages/vcm/VcmSignup";
+import VcmDashboard from "./pages/vcm/VcmDashboard";
+import VcmCertifications from "./pages/vcm/VcmCertifications";
+import VcmNewCertification from "./pages/vcm/VcmNewCertification";
+import VcmTrainingLog from "./pages/vcm/VcmTrainingLog";
+import VcmOpportunities from "./pages/vcm/VcmOpportunities";
+import VcmProfile from "./pages/vcm/VcmProfile";
+
+function VcmRoutes() {
+  return (
+    <VcmAuthProvider>
+      <Routes>
+        <Route path="/" element={<VcmLanding />} />
+        <Route path="/login" element={<VcmLogin />} />
+        <Route path="/signup" element={<VcmSignup />} />
+        <Route path="/dashboard" element={<VcmProtectedRoute><VcmDashboard /></VcmProtectedRoute>} />
+        <Route path="/certifications" element={<VcmProtectedRoute><VcmCertifications /></VcmProtectedRoute>} />
+        <Route path="/certifications/new" element={<VcmProtectedRoute><VcmNewCertification /></VcmProtectedRoute>} />
+        <Route path="/training-log" element={<VcmProtectedRoute><VcmTrainingLog /></VcmProtectedRoute>} />
+        <Route path="/opportunities" element={<VcmProtectedRoute><VcmOpportunities /></VcmProtectedRoute>} />
+        <Route path="/profile" element={<VcmProtectedRoute><VcmProfile /></VcmProtectedRoute>} />
+      </Routes>
+    </VcmAuthProvider>
+  );
+}
+
 export default function App() {
   return (
     <Routes>
@@ -49,6 +80,9 @@ export default function App() {
       <Route path="/dashboard/employees" element={<ProtectedRoute><Employees /></ProtectedRoute>} />
       <Route path="/dashboard/training" element={<ProtectedRoute><Training /></ProtectedRoute>} />
       <Route path="/dashboard/readiness" element={<ProtectedRoute><Readiness /></ProtectedRoute>} />
+
+      {/* VCM — Virtual Certification Manager */}
+      <Route path="/vcm/*" element={<VcmRoutes />} />
     </Routes>
   );
 }
