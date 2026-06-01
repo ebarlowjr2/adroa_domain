@@ -7,16 +7,25 @@ import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { BookOpen, Send, ExternalLink, Plus, Library, Check, Loader2, Search, FolderOpen, ChevronRight } from 'lucide-react'
+import { BookOpen, Send, ExternalLink, Plus, Library, Check, Loader2, Search, FolderOpen, ChevronRight, ShieldAlert, X as XIcon } from 'lucide-react'
 import { fetchCourseList, fetchCollectionList, getCategoryFromTags, estimateMinutesFromAbout } from '@/services/learnhouse'
 import type { LearnHouseCourse, LearnHouseCollection } from '@/services/learnhouse'
 import { openWithSso } from '@/services/sso'
+import { useIsAdmin } from '@/hooks/useIsAdmin'
 import type { TrainingCatalog, Employee, TrainingAssignment } from '@/lib/types'
+
+interface MandatoryTraining {
+  id: string
+  org_id: string
+  training_id: string
+  created_at: string
+}
 
 type LibraryTab = 'collections' | 'courses'
 
 export default function Training() {
   const { organization, user } = useAuth()
+  const isAdmin = useIsAdmin()
   const [catalog, setCatalog] = useState<TrainingCatalog[]>([])
   const [employees, setEmployees] = useState<Employee[]>([])
   const [assignments, setAssignments] = useState<(TrainingAssignment & { employee?: Employee; training?: TrainingCatalog })[]>([])
@@ -34,6 +43,11 @@ export default function Training() {
   const [assignError, setAssignError] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
 
+  // Mandatory training state
+  const [mandatoryTrainings, setMandatoryTrainings] = useState<MandatoryTraining[]>([])
+  const [showMandatoryDialog, setShowMandatoryDialog] = useState(false)
+  const [mandatoryLoading, setMandatoryLoading] = useState(false)
+
   // Course Library state
   const [libraryTab, setLibraryTab] = useState<LibraryTab>('collections')
   const [libraryCourses, setLibraryCourses] = useState<LearnHouseCourse[]>([])
@@ -47,18 +61,20 @@ export default function Training() {
   const loadData = useCallback(async () => {
     if (!organization) return
 
-    const [catalogRes, empRes, assignRes] = await Promise.all([
+    const [catalogRes, empRes, assignRes, mandatoryRes] = await Promise.all([
       supabase.from('training_catalog').select('*').eq('active', true).order('title'),
       supabase.from('employees').select('*').eq('org_id', organization.id).eq('status', 'active'),
       supabase.from('training_assignments')
         .select('*, employee:employees(*), training:training_catalog(*)')
         .eq('org_id', organization.id)
         .order('created_at', { ascending: false }),
+      supabase.from('org_mandatory_training').select('*').eq('org_id', organization.id),
     ])
 
     setCatalog((catalogRes.data as TrainingCatalog[]) || [])
     setEmployees((empRes.data as Employee[]) || [])
     setAssignments(assignRes.data || [])
+    setMandatoryTrainings((mandatoryRes.data as MandatoryTraining[]) || [])
     setLoading(false)
   }, [organization])
 
@@ -133,6 +149,29 @@ export default function Training() {
     }
     setAddingCollectionId(null)
   }
+
+  const isMandatory = (trainingId: string): boolean => {
+    return mandatoryTrainings.some(m => m.training_id === trainingId)
+  }
+
+  const toggleMandatory = async (trainingId: string) => {
+    if (!organization) return
+    setMandatoryLoading(true)
+    if (isMandatory(trainingId)) {
+      await supabase.from('org_mandatory_training')
+        .delete()
+        .eq('org_id', organization.id)
+        .eq('training_id', trainingId)
+    } else {
+      await supabase.from('org_mandatory_training')
+        .insert({ org_id: organization.id, training_id: trainingId })
+    }
+    await loadData()
+    setMandatoryLoading(false)
+  }
+
+  const mandatoryCatalog = catalog.filter(c => isMandatory(c.id))
+  const nonMandatoryCatalog = catalog.filter(c => !isMandatory(c.id))
 
   const filteredLibraryCourses = libraryCourses.filter(c => {
     if (!librarySearch) return true
@@ -278,6 +317,56 @@ export default function Training() {
             })
           )}
         </div>
+      </div>
+
+      {/* Mandatory Training Section */}
+      <div className="mb-8">
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <ShieldAlert size={18} className="text-amber-400" />
+            <h2 className="text-lg font-semibold text-white">Mandatory Training</h2>
+            <span className="text-xs text-white/40">All employees must complete</span>
+          </div>
+          {isAdmin && (
+            <button
+              onClick={() => setShowMandatoryDialog(true)}
+              className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white/70 hover:bg-white/10 hover:text-white"
+            >
+              <Plus size={14} />
+              Manage
+            </button>
+          )}
+        </div>
+
+        {mandatoryCatalog.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-white/10 bg-white/5 p-6 text-center">
+            <ShieldAlert size={28} className="mx-auto mb-2 text-white/20" />
+            <p className="text-sm text-white/40">No mandatory training set</p>
+            {isAdmin && (
+              <p className="mt-1 text-xs text-white/30">Click "Manage" to designate required courses for all employees</p>
+            )}
+          </div>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {mandatoryCatalog.map(course => {
+              const assignedCount = assignments.filter(a => a.training_id === course.id).length
+              const completedCount = assignments.filter(a => a.training_id === course.id && a.status === 'completed').length
+              return (
+                <div key={course.id} className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
+                  <div className="flex items-start justify-between mb-1">
+                    <BookOpen size={16} className="mt-0.5 text-amber-400" />
+                    <Badge variant="warning">Mandatory</Badge>
+                  </div>
+                  <h3 className="text-sm font-semibold text-white">{course.title}</h3>
+                  <div className="mt-2 flex items-center justify-between text-xs text-white/40">
+                    <span>{course.estimated_minutes} min</span>
+                    <span>{completedCount}/{assignedCount} completed</span>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
 
       {/* Assignments Table */}
@@ -660,6 +749,66 @@ export default function Training() {
             }
           </p>
           <Button variant="outline" onClick={() => setShowLibraryDialog(false)}>
+            Done
+          </Button>
+        </div>
+      </Dialog>
+      {/* Mandatory Training Management Dialog */}
+      <Dialog open={showMandatoryDialog} onClose={() => setShowMandatoryDialog(false)} className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Manage Mandatory Training</DialogTitle>
+          <p className="text-sm text-white/50 mt-1">
+            Select courses that all employees must complete
+          </p>
+        </DialogHeader>
+
+        <div className="space-y-2 max-h-[60vh] overflow-y-auto">
+          {catalog.length === 0 ? (
+            <p className="text-sm text-white/40 text-center py-4">
+              Add courses to your catalog first
+            </p>
+          ) : (
+            catalog.map(course => {
+              const mandatory = isMandatory(course.id)
+              return (
+                <div
+                  key={course.id}
+                  className={`flex items-center justify-between rounded-lg border p-3 transition-colors ${
+                    mandatory
+                      ? 'border-amber-500/30 bg-amber-500/10'
+                      : 'border-white/10 bg-white/5 hover:bg-white/10'
+                  }`}
+                >
+                  <div className="flex-1 min-w-0 mr-3">
+                    <h4 className="text-sm font-medium text-white truncate">{course.title}</h4>
+                    <p className="text-xs text-white/40 mt-0.5">{course.estimated_minutes} min · {course.category}</p>
+                  </div>
+                  <button
+                    onClick={() => toggleMandatory(course.id)}
+                    disabled={mandatoryLoading}
+                    className={`flex-shrink-0 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                      mandatory
+                        ? 'bg-amber-500/20 text-amber-400 hover:bg-red-500/20 hover:text-red-400'
+                        : 'bg-white/5 text-white/50 hover:bg-amber-500/20 hover:text-amber-400'
+                    }`}
+                  >
+                    {mandatory ? (
+                      <span className="flex items-center gap-1"><XIcon size={12} /> Remove</span>
+                    ) : (
+                      <span className="flex items-center gap-1"><ShieldAlert size={12} /> Make Mandatory</span>
+                    )}
+                  </button>
+                </div>
+              )
+            })
+          )}
+        </div>
+
+        <div className="flex justify-between items-center pt-4 mt-4 border-t border-white/10">
+          <p className="text-xs text-white/40">
+            {mandatoryCatalog.length} mandatory course{mandatoryCatalog.length !== 1 ? 's' : ''}
+          </p>
+          <Button variant="outline" onClick={() => setShowMandatoryDialog(false)}>
             Done
           </Button>
         </div>

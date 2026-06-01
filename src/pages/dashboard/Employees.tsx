@@ -7,11 +7,13 @@ import { Input } from '@/components/ui/input'
 import { Select } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Plus, Search, Edit2, UserX, UserCheck } from 'lucide-react'
+import { Plus, Search, Edit2, UserX, UserCheck, Trash2 } from 'lucide-react'
+import { useIsAdmin } from '@/hooks/useIsAdmin'
 import type { Employee } from '@/lib/types'
 
 export default function Employees() {
   const { organization } = useAuth()
+  const isAdmin = useIsAdmin()
   const [employees, setEmployees] = useState<Employee[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -117,6 +119,13 @@ export default function Employees() {
     loadEmployees()
   }
 
+  const deleteEmployee = async (emp: Employee) => {
+    if (!confirm(`Remove ${emp.first_name} ${emp.last_name} from the organization? This will also delete their training assignments.`)) return
+    await supabase.from('training_assignments').delete().eq('employee_id', emp.id)
+    await supabase.from('employees').delete().eq('id', emp.id)
+    loadEmployees()
+  }
+
   const departments = [...new Set(employees.map(e => e.department).filter(Boolean))]
 
   const filtered = employees.filter(emp => {
@@ -135,10 +144,12 @@ export default function Employees() {
             {employees.filter(e => e.status === 'active').length} active of {organization?.seat_limit} seats
           </p>
         </div>
-        <Button onClick={openAdd}>
-          <Plus size={16} className="mr-2" />
-          Add Employee
-        </Button>
+        {isAdmin && (
+          <Button onClick={openAdd}>
+            <Plus size={16} className="mr-2" />
+            Add Employee
+          </Button>
+        )}
       </div>
 
       {/* Filters */}
@@ -190,7 +201,7 @@ export default function Employees() {
                   <th className="px-4 py-3">Department</th>
                   <th className="px-4 py-3">Job Title</th>
                   <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3">Actions</th>
+                  {isAdmin && <th className="px-4 py-3">Actions</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
@@ -207,24 +218,33 @@ export default function Employees() {
                         {emp.status}
                       </Badge>
                     </td>
-                    <td className="px-4 py-3">
-                      <div className="flex gap-1">
-                        <button
-                          onClick={() => openEdit(emp)}
-                          className="rounded-lg p-1.5 text-white/50 hover:bg-white/10 hover:text-white"
-                          title="Edit"
-                        >
-                          <Edit2 size={14} />
-                        </button>
-                        <button
-                          onClick={() => toggleStatus(emp)}
-                          className="rounded-lg p-1.5 text-white/50 hover:bg-white/10 hover:text-white"
-                          title={emp.status === 'active' ? 'Disable' : 'Enable'}
-                        >
-                          {emp.status === 'active' ? <UserX size={14} /> : <UserCheck size={14} />}
-                        </button>
-                      </div>
-                    </td>
+                    {isAdmin && (
+                      <td className="px-4 py-3">
+                        <div className="flex gap-1">
+                          <button
+                            onClick={() => openEdit(emp)}
+                            className="rounded-lg p-1.5 text-white/50 hover:bg-white/10 hover:text-white"
+                            title="Edit"
+                          >
+                            <Edit2 size={14} />
+                          </button>
+                          <button
+                            onClick={() => toggleStatus(emp)}
+                            className="rounded-lg p-1.5 text-white/50 hover:bg-white/10 hover:text-white"
+                            title={emp.status === 'active' ? 'Deactivate' : 'Activate'}
+                          >
+                            {emp.status === 'active' ? <UserX size={14} /> : <UserCheck size={14} />}
+                          </button>
+                          <button
+                            onClick={() => deleteEmployee(emp)}
+                            className="rounded-lg p-1.5 text-white/50 hover:bg-red-500/20 hover:text-red-400"
+                            title="Delete"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
