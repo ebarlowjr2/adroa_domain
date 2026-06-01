@@ -12,6 +12,7 @@ import {
   BarChart3,
   UserPlus,
   GraduationCap,
+  Award,
 } from 'lucide-react'
 
 export default function Landing() {
@@ -25,6 +26,12 @@ export default function Landing() {
           Adroa Domain
         </Link>
         <nav className="flex items-center gap-3">
+          <Link
+            to="/vcm"
+            className="hidden rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white hover:bg-white/10 sm:inline-flex"
+          >
+            Certification Manager
+          </Link>
           <a
             href="https://learn.adroadomain.com"
             className="hidden rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white hover:bg-white/10 sm:inline-flex"
@@ -66,7 +73,7 @@ export default function Landing() {
             Select the option that best fits how you want to use the platform.
           </p>
 
-          <div className="mx-auto grid max-w-5xl gap-8 md:grid-cols-2">
+          <div className="mx-auto grid max-w-5xl gap-8 md:grid-cols-2 lg:grid-cols-3">
             {/* Organization Card */}
             <Link
               to="/org/signup"
@@ -132,6 +139,38 @@ export default function Landing() {
                 Browse Courses <ArrowRight size={16} />
               </div>
             </a>
+            {/* Certification Tracking Card */}
+            <Link
+              to="/vcm/signup"
+              className="group relative rounded-2xl border border-white/10 bg-brand-card p-8 transition-all hover:border-brand-accent/40 hover:shadow-lg hover:shadow-brand-accent/5"
+            >
+              <div className="mb-5 inline-flex rounded-xl bg-brand-accent/10 p-4 text-brand-accent transition-colors group-hover:bg-brand-accent/20">
+                <Award size={28} />
+              </div>
+              <h3 className="text-2xl font-bold text-white">Track Your Certifications</h3>
+              <p className="mt-3 text-sm leading-relaxed text-white/60">
+                Stay ahead of certification renewals by tracking credentials, continuing
+                education units, completed training, and upcoming opportunities — all in
+                one dashboard.
+              </p>
+              <ul className="mt-5 space-y-2 text-sm text-white/50">
+                <li className="flex items-center gap-2">
+                  <CheckCircle size={14} className="text-brand-accent" />
+                  Track CEUs, CPEs & PDUs across certifications
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle size={14} className="text-brand-accent" />
+                  Renewal reminders & expiration alerts
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle size={14} className="text-brand-accent" />
+                  Log training activities & discover opportunities
+                </li>
+              </ul>
+              <div className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-brand-accent transition-all group-hover:gap-3">
+                Start Tracking <ArrowRight size={16} />
+              </div>
+            </Link>
           </div>
 
           <p className="mt-8 text-center text-sm text-white/40">

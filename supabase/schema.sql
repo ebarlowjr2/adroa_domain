@@ -193,3 +193,10 @@ INSERT INTO training_catalog (title, description, category, required_default, le
   ('Social Media & Location Safety', 'Protecting yourself and your organization from social media reconnaissance and location-based risks.', 'awareness', false, NULL, 20),
   ('Incident Reporting Basics', 'How to recognize, document, and report security incidents through proper channels.', 'compliance', true, NULL, 15)
 ON CONFLICT DO NOTHING;
+
+-- ============================================
+-- VCM (Virtual Certification Manager) tables
+-- See supabase/vcm-migration.sql for full schema + seed data
+-- Tables: vcm_user_profiles, certification_catalog, user_certifications,
+--         training_activities, training_opportunities
+-- ============================================

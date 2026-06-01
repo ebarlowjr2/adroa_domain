@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Building2, User, ArrowRight, ChevronRight } from 'lucide-react'
+import { Building2, User, Award, ArrowRight, ChevronRight } from 'lucide-react'
 import Footer from '@/components/Footer'
 
 export default function GetStarted() {
@@ -35,7 +35,7 @@ export default function GetStarted() {
           we have a path for you.
         </p>
 
-        <div className="mt-12 grid w-full max-w-4xl gap-6 md:grid-cols-2">
+        <div className="mt-12 grid w-full max-w-5xl gap-6 md:grid-cols-2 lg:grid-cols-3">
           {/* Organization Card */}
           <Link
             to="/org/signup"
@@ -101,6 +101,38 @@ export default function GetStarted() {
               Start Learning <ArrowRight size={16} />
             </div>
           </a>
+          {/* Certification Tracking Card */}
+          <Link
+            to="/vcm/signup"
+            className="group relative rounded-2xl border border-white/10 bg-brand-card p-8 transition-all hover:border-brand-accent/40 hover:shadow-lg hover:shadow-brand-accent/5"
+          >
+            <div className="mb-5 inline-flex rounded-xl bg-brand-accent/10 p-4 text-brand-accent transition-colors group-hover:bg-brand-accent/20">
+              <Award size={28} />
+            </div>
+            <h2 className="text-2xl font-bold text-white">Track Certifications</h2>
+            <p className="mt-3 text-sm leading-relaxed text-white/60">
+              Stay ahead of certification renewals by tracking credentials, continuing
+              education units, completed training, and upcoming opportunities — all in
+              one dashboard.
+            </p>
+            <ul className="mt-5 space-y-2 text-sm text-white/50">
+              <li className="flex items-center gap-2">
+                <ChevronRight size={14} className="text-brand-accent" />
+                Track CEUs, CPEs & PDUs across certifications
+              </li>
+              <li className="flex items-center gap-2">
+                <ChevronRight size={14} className="text-brand-accent" />
+                Renewal reminders & expiration alerts
+              </li>
+              <li className="flex items-center gap-2">
+                <ChevronRight size={14} className="text-brand-accent" />
+                Log training activities & discover opportunities
+              </li>
+            </ul>
+            <div className="mt-6 inline-flex items-center gap-2 text-sm font-medium text-brand-accent transition-all group-hover:gap-3">
+              Start Tracking <ArrowRight size={16} />
+            </div>
+          </Link>
         </div>
 
         <p className="mt-10 text-center text-sm text-white/40">

@@ -20,15 +20,26 @@ export default function Login() {
     setError('')
     setLoading(true)
 
-    const { error: signInError } = await signIn(form.email, form.password)
+    try {
+      const timeoutPromise = new Promise<{ error: string }>((resolve) =>
+        setTimeout(() => resolve({ error: 'Sign in timed out. Please check your connection and try again.' }), 15000)
+      )
+      const result = await Promise.race([
+        signIn(form.email, form.password),
+        timeoutPromise,
+      ])
 
-    if (signInError) {
-      setError(signInError)
+      if (result.error) {
+        setError(result.error)
+        setLoading(false)
+        return
+      }
+
+      navigate('/dashboard')
+    } catch {
+      setError('An unexpected error occurred. Please try again.')
       setLoading(false)
-      return
     }
-
-    navigate('/dashboard')
   }
 
   return (
